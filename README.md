@@ -1,6 +1,6 @@
 ## Pharmaccess
 
-This repository contains the code and artefacts for the Pharmaccess HIE
+This repository contains the code and artefacts for the MamaToto HIE
 
 
 
