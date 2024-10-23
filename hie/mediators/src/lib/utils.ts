@@ -315,3 +315,22 @@ export const redirectToDev = async (path: string ,data: any) => {
     }
 
 }
+
+
+export let sendSlackAlert = async (message: any) => {
+    try {
+        const SLACK_CHANNEL_URL = process.env.SLACK_CHANNEL_URL ?? ''; 
+        let response = await (await fetch(SLACK_CHANNEL_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(
+                {text: `IOL -> ${message}`}
+            )
+        })).json();
+        return response;
+    } catch (error) {
+        return {error}
+    }
+}

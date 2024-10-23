@@ -1,5 +1,5 @@
 import express from 'express';
-import { FhirApi, sendTurnNotification } from '../lib/utils';
+import { FhirApi, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
 import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
@@ -254,6 +254,7 @@ router.post('/', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
@@ -324,6 +325,7 @@ router.post('/carepay', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
       return;
     }
     res.statusCode = 200;
@@ -353,6 +355,7 @@ router.post('/carepay', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
@@ -398,6 +401,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`)
       return;
     }
     res.statusCode = 200;
@@ -417,6 +421,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`)
     return;
   }
 });
@@ -463,6 +468,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`);
       return;
     }
     res.statusCode = 200;
@@ -482,6 +488,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
