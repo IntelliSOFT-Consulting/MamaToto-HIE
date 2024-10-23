@@ -308,7 +308,7 @@ router.post('/carepay', async (req, res) => {
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
     }))).json();
 
-    // console.log(`Res: ${JSON.stringify(carepayResponse)}`)
+    console.log(`Res: ${JSON.stringify(carepayResponse)}`)
 
     if (carepayResponse.status === 400) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
