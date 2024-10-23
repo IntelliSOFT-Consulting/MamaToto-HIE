@@ -31,7 +31,7 @@ router.post('/turn', async (req, res) => {
         // console.log(`Res: ${JSON.stringify(turnResponse)}`)
         // res.statusCode =turnResponse.status;
         let turnResponseJson = await turnResponse.json();
-        // res.json(turnResponseJson);
+        res.json(turnResponseJson);
         if(turnResponseJson?.errors?.[0]?.details.includes("active session")){
             let claim = await (await (fetch(`https://whatsapp.turn.io/v1/contacts/${(data.phone).replace(/^\+/, '')}/claim`, {
                 method: "GET",

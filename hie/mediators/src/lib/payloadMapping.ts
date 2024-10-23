@@ -224,7 +224,7 @@ export const fetchApprovedEndorsements = async () => {
           let carepayPatientRef = { type: { coding: [{ system: "http://carepay.com", code: "CAREPAY-PATIENT-REF", display: "Carepay Patient Ref" }] }, value: i.id }
           patientResource.identifier.push(carepayPatientRef);
           // update patient;
-          console.log(patientResource);
+          // console.log(patientResource);
           let updated = await (await FhirApi({
             url: `/Patient/${patient?.entry[0]?.resource?.id}`, method: "PUT",
             data: JSON.stringify({ ...patientResource })
