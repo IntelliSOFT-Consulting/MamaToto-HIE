@@ -11,7 +11,7 @@
                 {
                     "name": "Custom Registration Route",
                     "host": "mediators",
-                    "pathTransform": "s/\/\/.*$/",
+                    "pathTransform": "s/\\/\\/.*$//",
                     "port": "3000",
                     "primary": true,
                     "type": "http",
@@ -23,7 +23,7 @@
                 "*"
             ],
             "methods": [
-                "POST"
+                "POST", "GET", "PUT"
             ],
             "type": "http"
         }

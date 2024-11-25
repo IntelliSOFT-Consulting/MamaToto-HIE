@@ -275,30 +275,22 @@ const OPENHIM_DEV_URL = process.env.OPENHIM_DEV_URL ?? '';
 const OPENHIM_DEV_CLIENT = process.env.OPENHIM_DEV_CLIENT ?? '';
 const OPENHIM_DEV_CLIENT_PASSWORD = process.env.OPENHIM_DEV_CLIENT_PASSWORD ?? '';
 
-export const redirectToDev = async (path: string ,data: any) => {
+export const redirectToDev = async (path: string ,data: any, method: string = "POST") => {
     try {
+        console.log(OPENHIM_DEV_URL + path);
         let response = await fetch(OPENHIM_DEV_URL + path, {
-            method: 'POST', body: JSON.stringify(data),
+            method: method, ...(method !== "GET") && {body: JSON.stringify(data)},
             headers: {
                 "Authorization": 'Basic ' + Buffer.from(OPENHIM_DEV_CLIENT + ':' + OPENHIM_DEV_CLIENT_PASSWORD).toString('base64'),
-                "Content-Type":"application/json"
+                "Content-Type":"application/json",
+                "Accept": "application/json"
             }
         })
         let statusCode = response.status;
         let responseData = await response.json();
-        if (statusCode > 201){
-            return {
-                resourceType: "OperationOutcome",
-                id: "exception",
-                issue: [{
-                    severity: "error",
-                    code: "exception",
-                    details: {
-                        text: `Failed to redirect to dev SHR: Code: ${statusCode}: ${response.statusText}`
-                    }
-                }]
-            }
-        }
+        // if (statusCode > 201 && statusCode !== 404){
+        //     return responseData;
+        // }
         return responseData;
     } catch (error) {
         return {
