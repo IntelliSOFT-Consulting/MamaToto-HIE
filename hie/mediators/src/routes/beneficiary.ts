@@ -1,8 +1,9 @@
 import express from 'express';
-import { FhirApi, sendTurnNotification } from '../lib/utils';
+import { FhirApi, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
 import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
+import { MamaTotoFHIRTransformer, MamaTotoFormData } from '../lib/heyforms';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
@@ -254,6 +255,7 @@ router.post('/', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
@@ -324,6 +326,7 @@ router.post('/carepay', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
       return;
     }
     res.statusCode = 200;
@@ -353,6 +356,7 @@ router.post('/carepay', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
@@ -398,6 +402,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`)
       return;
     }
     res.statusCode = 200;
@@ -417,6 +422,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`)
     return;
   }
 });
@@ -463,6 +469,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
           }
         }]
       });
+      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`);
       return;
     }
     res.statusCode = 200;
@@ -482,8 +489,61 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
         }
       }]
     });
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return;
   }
 });
+
+
+router.post('/webform/transform', (req, res) => {
+  try {
+      const formData: MamaTotoFormData = req.body;
+      const transformer = new MamaTotoFHIRTransformer(formData);
+
+      // Transform Patient
+      const patient = transformer.transformToFHIRPatient();
+
+      // Create Patient Reference
+      const patientReference = `Patient/${patient.id}`;
+
+      // Transform additional resources
+      const pregnancyObservations = transformer.transformToPregnancyObservations(patientReference);
+      const conditions = transformer.transformToConditions(patientReference);
+
+      // Combine resources
+      const fhirBundle = {
+          resourceType: 'Bundle',
+          type: 'transaction',
+          entry: [
+              { 
+                  resource: patient,
+                  request: { method: 'POST', url: 'Patient' }
+              },
+              ...pregnancyObservations.map(obs => ({
+                  resource: obs,
+                  request: { method: 'POST', url: 'Observation' }
+              })),
+              ...conditions.map(condition => ({
+                  resource: condition,
+                  request: { method: 'POST', url: 'Condition' }
+              }))
+          ]
+      };
+      res.status(200).json(fhirBundle);
+      return;
+  } catch (error) {
+      console.error('Transformation error:', error);
+      res.status(500).json({
+          issue: [{
+              severity: 'error',
+              code: 'exception',
+              details: { text: 'Error transforming MamaToto data to FHIR' }
+          }]
+      });
+  }
+});
+
+
+
 
 export default router;

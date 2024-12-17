@@ -8,7 +8,7 @@ spring:
     baselineOnMigrate: true
   datasource:
     driver: org.postgresql.Driver
-    url: jdbc:postgresql://hapi-fhir-postgres:5432/hapi
+    url: jdbc:postgresql://shr-postgres:5432/hapi
     dialect: org.hibernate.dialect.PostgreSQL95Dialect
     username: postgres
     password: hapi123
