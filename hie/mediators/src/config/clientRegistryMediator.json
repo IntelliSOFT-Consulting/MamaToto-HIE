@@ -1,0 +1,37 @@
+{
+    "urn": "urn:mediator:mamatoto-client-registry",
+    "version": "1.0.0",
+    "name": "MamaToto Client Registry Mediator",
+    "description": "This mediator is responsible for handling Client Registry bound requests.",
+    "defaultChannelConfig": [
+      {
+        "name": "MamaToto Client Registry Channel",
+        "urlPattern": "^/client-registry/.*$",
+        "routes": [
+          {
+            "name": "Client Registry Route",
+            "host": "client-registry",
+            "port": "8080",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+  
+          }
+        ],
+        "allow": ["*"],
+        "methods": ["GET", "POST", "PUT", "PATCH"],
+        "type": "http"
+      }
+    ],
+    "endpoints": [
+      {
+        "name": "MamaToto CR Mediator Endpoint",
+        "host": "client-registry",
+        "path": "/fhir",
+        "port": "8080",
+        "primary": true,
+        "type": "http",
+        "status":"enabled"
+      }
+    ]
+  }

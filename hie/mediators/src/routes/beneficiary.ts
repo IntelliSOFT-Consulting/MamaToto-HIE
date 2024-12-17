@@ -3,6 +3,7 @@ import { FhirApi, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
 import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
+import { MamaTotoFHIRTransformer, MamaTotoFormData } from '../lib/heyforms';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
@@ -492,5 +493,57 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
     return;
   }
 });
+
+
+router.post('/webform/transform', (req, res) => {
+  try {
+      const formData: MamaTotoFormData = req.body;
+      const transformer = new MamaTotoFHIRTransformer(formData);
+
+      // Transform Patient
+      const patient = transformer.transformToFHIRPatient();
+
+      // Create Patient Reference
+      const patientReference = `Patient/${patient.id}`;
+
+      // Transform additional resources
+      const pregnancyObservations = transformer.transformToPregnancyObservations(patientReference);
+      const conditions = transformer.transformToConditions(patientReference);
+
+      // Combine resources
+      const fhirBundle = {
+          resourceType: 'Bundle',
+          type: 'transaction',
+          entry: [
+              { 
+                  resource: patient,
+                  request: { method: 'POST', url: 'Patient' }
+              },
+              ...pregnancyObservations.map(obs => ({
+                  resource: obs,
+                  request: { method: 'POST', url: 'Observation' }
+              })),
+              ...conditions.map(condition => ({
+                  resource: condition,
+                  request: { method: 'POST', url: 'Condition' }
+              }))
+          ]
+      };
+      res.status(200).json(fhirBundle);
+      return;
+  } catch (error) {
+      console.error('Transformation error:', error);
+      res.status(500).json({
+          issue: [{
+              severity: 'error',
+              code: 'exception',
+              details: { text: 'Error transforming MamaToto data to FHIR' }
+          }]
+      });
+  }
+});
+
+
+
 
 export default router;

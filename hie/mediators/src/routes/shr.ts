@@ -1,30 +1,34 @@
-// import express, { Request, response, Response } from "express";
-// import { createClient, getOpenHIMToken, installChannels } from "../lib/utils";
+import express, { Request, response, Response } from "express";
+
+const router = express.Router();
+router.use(express.json());
+
+// Supported methods
+// 1. GET
+// 2. POST
+// 3. PUT
 
 
-// const router = express.Router();
-// router.use(express.json());
-
-
-
-// // Put
-// router.put("/:id", async (req: Request, res: Response) => {
-//     try {
+router.put("/:resourceType/:id", async (req: Request, res: Response) => {
+    try {
         
-//         let resource = req.body;
-//         // let response = await getKeycloakUserToken(username, password);
-//         // console.log(response);
-//         res.statusCode = Object.keys(response).indexOf('error') < 0 ? 200 : 401 ;
-//         res.json({ ...response, status: Object.keys(response).indexOf('error') < 0  ? "success" : "error"  , });
-//         return;
-//     }
-//     catch (error) {
-//         console.log(error);
-//         res.statusCode = 401;
-//         res.json({ error: "incorrect email or password", status: "error" });
-//         return;
-//     }
-// });
+        const { resourceType, id } = req.params;
+        const resource = req.body;
+        // const patientId = req.body
+
+        // let response = await getKeycloakUserToken(username, password);
+        // console.log(response);
+        res.statusCode = Object.keys(response).indexOf('error') < 0 ? 200 : 401 ;
+        res.json({ ...response, status: Object.keys(response).indexOf('error') < 0  ? "success" : "error"  , });
+        return;
+    }
+    catch (error) {
+        console.log(error);
+        res.statusCode = 401;
+        res.json({ error: "incorrect email or password", status: "error" });
+        return;
+    }
+});
 
 
 

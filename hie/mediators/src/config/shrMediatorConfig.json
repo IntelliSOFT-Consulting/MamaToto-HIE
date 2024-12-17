@@ -10,7 +10,7 @@
       "routes": [
         {
           "name": "SHR Route",
-          "host": "hapi-fhir-jpa",
+          "host": "shr",
           "pathTransform": "s/\/\/.*$/",
           "port": "8080",
           "primary": true,
@@ -27,7 +27,7 @@
   "endpoints": [
     {
       "name": "MamaToto SHR Mediator Endpoint",
-      "host": "hapi-fhir-jpa",
+      "host": "shr",
       "path": "/fhir",
       "port": "8080",
       "primary": true,

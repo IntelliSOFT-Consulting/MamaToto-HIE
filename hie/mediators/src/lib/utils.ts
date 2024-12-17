@@ -3,6 +3,7 @@ import shrMediatorConfig from '../config/shrMediatorConfig.json';
 import carepayBeneficiary from '../config/beneficiaryMediator.json'
 import turnioMediatorConfig from '../config/turnioNotificationsMediator.json';
 import customRegistrationConfig from '../config/customRegistrationMediators.json'
+import clientRegistryConfig from '../config/clientRegistryMediator.json'
 
 import { Agent } from 'https';
 import * as crypto from 'crypto';
@@ -15,7 +16,8 @@ const mediators = [
     shrMediatorConfig,
     carepayBeneficiary,
     turnioMediatorConfig,
-    customRegistrationConfig
+    customRegistrationConfig,
+    clientRegistryConfig
 ];
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>
@@ -53,7 +55,6 @@ export const importMediators = () => {
 
 export const getOpenHIMToken = async () => {
     try {
-        // console.log("Auth", auth)
         let token = await utils.genAuthHeaders(openhimConfig);
         return token
     } catch (error) {
@@ -74,9 +75,8 @@ export const installChannels = async () => {
     })
 }
 
-export let apiHost = process.env.FHIR_BASE_URL
-console.log(apiHost)
-
+export const shrApiHost = process.env.SHR_BASE_URL;
+export const crApiHost = process.env.CLIENT_REGISTRY_BASE_URL;
 
 // a fetch wrapper for HAPI FHIR server.
 export const FhirApi = async (params: any) => {
@@ -85,7 +85,39 @@ export const FhirApi = async (params: any) => {
         params.method = 'GET';
     }
     try {
-        let response = await fetch(String(`${apiHost}${params.url}`), {
+        let response = await fetch(String(`${shrApiHost}${params.url}`), {
+            headers: _defaultHeaders,
+            method: params.method ? String(params.method) : 'GET',
+            ...(params.method !== 'GET' && params.method !== 'DELETE') && { body: String(params.data) }
+        });
+        let responseJSON = await response.json();
+        let res = {
+            status: "success",
+            statusText: response.statusText,
+            data: responseJSON
+        };
+        return res;
+    } catch (error) {
+        console.error(error);
+        let res = {
+            statusText: "FHIRFetch: server error",
+            status: "error",
+            data: error
+        };
+        console.error(error);
+        return res;
+    }
+}
+
+
+// a fetch wrapper for HAPI FHIR server.
+export const ClientRegistryApi = async (params: any) => {
+    let _defaultHeaders = { "Content-Type": 'application/json' }
+    if (!params.method) {
+        params.method = 'GET';
+    }
+    try {
+        let response = await fetch(String(`${crApiHost}${params.url}`), {
             headers: _defaultHeaders,
             method: params.method ? String(params.method) : 'GET',
             ...(params.method !== 'GET' && params.method !== 'DELETE') && { body: String(params.data) }
@@ -247,11 +279,9 @@ type MessageTypes = "ENROLMENT_CONFIRMATION" | "ENROLMENT_REJECTION" | "SURVEY_F
 
 export const sendTurnNotification = async (data: any, type: MessageTypes) => {
     try {
-        let patient = await (await FhirApi({ url: `/${data?.subject?.reference}` })).data;
+        let patient = await (await ClientRegistryApi({ url: `/${data?.subject?.reference}` })).data;
 
-
-        let phoneNumber = patient?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value
-
+        let phoneNumber = patient?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value;
 
         // call mediator
         let TURN_MEDIATOR_ENDPOINT = process.env['TURN_MEDIATOR_ENDPOINT'] ?? "";
@@ -277,6 +307,7 @@ const OPENHIM_DEV_CLIENT_PASSWORD = process.env.OPENHIM_DEV_CLIENT_PASSWORD ?? '
 
 export const redirectToDev = async (path: string ,data: any) => {
     try {
+        console.log(data);
         let response = await fetch(OPENHIM_DEV_URL + path, {
             method: 'POST', body: JSON.stringify(data),
             headers: {
@@ -326,7 +357,7 @@ export let sendSlackAlert = async (message: any) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(
-                {text: `IOL -> ${message}`}
+                {text: `⚠️🚨 IOL error:  -> ${message}`}
             )
         })).json();
         return response;
