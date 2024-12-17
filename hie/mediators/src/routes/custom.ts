@@ -16,6 +16,99 @@ router.use(
 
 router.post("/:ShrResource", async (req, res) => {});
 //process FHIR Beneficiary
+
+
+/**
+ * @openapi
+ * /Patient:
+ *   post:
+ *     summary: Create a new Patient resource
+ *     description: Endpoint for creating a Patient resource with validation and routing logic
+ *     tags:
+ *       - Patient
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - resourceType
+ *             properties:
+ *               resourceType:
+ *                 type: string
+ *                 enum: ['Patient']
+ *                 description: Must be 'Patient'
+ *               telecom:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     system:
+ *                       type: string
+ *                       description: Telecom system (e.g., phone, email)
+ *                     value:
+ *                       type: string
+ *                       description: Telecom contact value
+ *     responses:
+ *       201:
+ *         description: Patient resource successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 resourceType:
+ *                   type: string
+ *                   example: Patient
+ *                 id:
+ *                   type: string
+ *                   description: Unique identifier for the created patient
+ *       400:
+ *         description: Error in creating Patient resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 resourceType:
+ *                   type: string
+ *                   enum: ['OperationOutcome']
+ *                 id:
+ *                   type: string
+ *                 issue:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       severity:
+ *                         type: string
+ *                         enum: ['error']
+ *                       code:
+ *                         type: string
+ *                         enum: ['exception']
+ *                       details:
+ *                         type: object
+ *                         properties:
+ *                           text:
+ *                             type: string
+ *                             description: Error message
+ *     examples:
+ *       validPatient:
+ *         value:
+ *           resourceType: Patient
+ *           name:
+ *             - use: official
+ *               family: Doe
+ *               given:
+ *                 - John
+ *           telecom:
+ *             - system: phone
+ *               value: "+1-555-123-4567"
+ *       invalidResourceType:
+ *         value:
+ *           resourceType: Practitioner
+ */
 router.post("/Patient", async (req, res) => {
   try {
     let data = req.body;

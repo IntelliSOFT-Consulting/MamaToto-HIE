@@ -2,9 +2,9 @@
   "version": "1.18.2",
   "minimumCoreVersion": "5.2.0",
   "protocol": "https",
-  "host": "openhim-comms.mamatoto.pharmaccess.io",
+  "host": "localhost",
   "hostPath": "",
-  "port": "",
+  "port": "8080",
   "title": "Admin Console",
   "footerTitle": "OpenHIM Administration Console",
   "footerPoweredBy": "<a href='http://openhim.org/' target='_blank'>Powered by OpenHIM</a>",
@@ -12,8 +12,8 @@
   "mediatorLastHeartbeatWarningSeconds": 60,
   "mediatorLastHeartbeatDangerSeconds": 120,
   "showLoginForm": true,
-  "ssoEnabled": true,
-  "keyCloakUrl": "https://keycloak.mamatoto.pharmaccess.io",
-  "keyCloakRealm": "master",
+  "ssoEnabled": false,
+  "keyCloakUrl": "http://localhost:9088",
+  "keyCloakRealm": "platform-realm",
   "keyCloakClientId": "openhim-oauth"
 }
