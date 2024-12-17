@@ -28,7 +28,7 @@ hapi:
     openapi_enabled: true
     ### This is the FHIR version. Choose between, DSTU2, DSTU3, R4 or R5
     fhir_version: R4
-    server_address: https://openhim-comms-mamatoto.intellisoftkenya.com/fhir
+    server_address: https://openhim-core.mamatoto.pharmaccess.io/fhir
     bulk_export_enabled: true
     default_pretty_print: true
     cql_enabled: true
@@ -65,15 +65,16 @@ hapi:
     enforce_referential_integrity_on_write: false
     #    etag_support_enabled: true
     #    expunge_enabled: true
-    #    daoconfig_client_id_strategy: null
-    #    client_id_strategy: ALPHANUMERIC
+    daoconfig_client_id_strategy: ANY
+    dao_config_server_id_mode: UUID
+    client_id_strategy: ANY
     #    fhirpath_interceptor_enabled: false
     filter_search_enabled: true
     graphql_enabled: true
     #    narrative_enabled: true
     mdm_enabled: true
     local_base_urls:
-      - https://openhim-comms-mamatoto.intellisoftkenya.com/fhir
+      - https://openhim-core.mamatoto.pharmaccess.io/fhir
 
     # mdm_enabled: true
     #    partitioning:
