@@ -85,6 +85,7 @@ services:
             - "5001:5001"
         depends_on:
             - mongo
+            - openhim-console
         networks:
             - openhim
             - hapi-fhir
@@ -97,8 +98,6 @@ services:
 
     openhim-console:
         container_name: openhim-console
-        depends_on:
-            - openhim-core
         image: jembi/openhim-console:latest
         restart: on-failure
         networks:
