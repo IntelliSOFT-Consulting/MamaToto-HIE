@@ -1,250 +1,371 @@
-import express, { Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-// Interfaces to represent our input and FHIR resources
-export interface MamaTotoFormData {
-    fields: any[];
-    answers: any[];
-}
+const router = Router();
 
-export interface FHIRPatient {
-    resourceType: 'Patient';
+// Input JSON types
+interface JsonRequest {
     id: string;
-    meta: {
-        profile: string[];
+    user: {
+        firstName: string;
+        lastName: string;
+        phoneNumber: string;
+        dateOfBirth: string;
+        maritalStatus: string;
+        nationality: string;
+        nationalId: string;
     };
-    name: Array<{
-        use: 'official';
-        family: string;
-        given: string[];
-    }>;
-    telecom?: Array<{
-        system: 'phone' | 'email';
-        value: string;
-        use?: 'home' | 'work';
-    }>;
-    gender?: 'male' | 'female' | 'other' | 'unknown';
-    birthDate?: string;
-    identifier?: Array<{
-        type?: {
-            coding: Array<{
-                system: string;
-                code: string;
-                display: string;
-            }>;
-        };
-        value: string;
-    }>;
-    maritalStatus?: {
-        coding: Array<{
-            system: string;
-            code: string;
-            display: string;
-        }>;
+    medical: {
+        lastMenstrualPeriod: string;
+        previouslyPregnant: boolean;
+        previousPregnancyComplications?: string[];
+        hasHealthConditions: boolean;
+        currentHealthConditions?: string[];
     };
 }
 
-interface FHIRCondition {
-    resourceType: 'Condition';
-    subject: {
-        reference: string;
-    };
-    code: {
-        coding: Array<{
-            system: string;
-            code: string;
-            display: string;
-        }>;
+// FHIR Response types
+interface Bundle {
+    resourceType: 'Bundle';
+    type: 'transaction';
+    entry: BundleEntry[];
+}
+
+interface BundleEntry {
+    // fullUrl: string;
+    resource: FhirResource;
+    request: {
+        method: string;
+        url: string;
     };
 }
 
-interface FHIRPregnancyObservation {
-    resourceType: 'Observation';
-    status: 'final';
-    code: {
-        coding: Array<{
-            system: string;
-            code: string;
-            display: string;
-        }>;
+interface FhirResource {
+    resourceType: string;
+    id: string;
+    meta?: {
+        profile?: string[];
     };
-    subject: {
-        reference: string;
-    };
-    effectiveDateTime?: string;
-    valueDateTime?: string;
+    [key: string]: any;
 }
 
-export class MamaTotoFHIRTransformer {
-    private formData: MamaTotoFormData;
+export const transformToFhir = (data: JsonRequest): Bundle => {
+    const patientId = `${uuidv4()}`;
 
-    constructor(formData: MamaTotoFormData) {
-        this.formData = formData;
-    }
-
-    // Helper method to find an answer by field ID
-    private findAnswer(fieldId: string) {
-        return this.formData.answers.find(ans => ans.id === fieldId);
-    }
-
-    // Transform form data to FHIR Patient
-    transformToFHIRPatient(): FHIRPatient {
-        const nameAnswer = this.findAnswer('bJKyl3XCKNt3');
-        const dobAnswer = this.findAnswer('YdbVvCqZxBoL');
-        const phoneAnswer = this.findAnswer('jO6hTFjPQb3y');
-        const nationalIdAnswer = this.findAnswer('z8gtNHjxPzcC');
-        const maritalStatusAnswer = this.findAnswer('hj3BjAaEoC9j');
-        const nationalityAnswer = this.findAnswer('BxnimRyOaiRR');
-
-        const patient: FHIRPatient = {
-            resourceType: 'Patient',
-            id: uuidv4(),
-            meta: {
-                profile: ['http://hl7.org/fhir/StructureDefinition/Patient']
+    // console.log(data);
+    // Create Patient resource
+    const patient: FhirResource = {
+        resourceType: 'Patient',
+        id: patientId,
+        meta: {
+            profile: ['http://fhir.org/guides/who/anc-cds/StructureDefinition/anc-patient']
+        },
+        identifier: [{
+            "type": {
+                "coding": [{
+                    "system": "https://terminology.hl7.org/CodeSystem-v2-0203",
+                    "code": "NI"
+                }]
             },
-            name: [{
-                use: 'official',
-                family: nameAnswer?.value?.lastName || '',
-                given: [nameAnswer?.value?.firstName || '']
-            }],
-            telecom: phoneAnswer ? [{
-                system: 'phone',
-                value: phoneAnswer.value,
-                use: 'home'
-            }] : undefined,
-            birthDate: this.convertToISODate(dobAnswer?.value),
-            identifier: nationalIdAnswer ? [{
-                type: {
-                    coding: [{
-                        system: 'http://terminology.hl7.org/CodeSystem/v2-0203',
-                        code: 'NI',
-                        display: 'National ID'
-                    }]
-                },
-                value: nationalIdAnswer.value.toString()
-            }] : undefined,
-            maritalStatus: this.mapMaritalStatus(maritalStatusAnswer?.value?.value[0]),
-            gender: this.mapGender(nationalityAnswer?.value?.value[0])
-        };
-
-        return patient;
-    }
-
-    // Transform form data to Pregnancy Observations
-    transformToPregnancyObservations(patientReference: string): FHIRPregnancyObservation[] {
-        const observations: FHIRPregnancyObservation[] = [];
-
-        // Expected Delivery Date
-        const eddAnswer = this.findAnswer('MPgyLg43uCqX');
-        if (eddAnswer) {
-            observations.push({
-                resourceType: 'Observation',
-                status: 'final',
-                code: {
-                    coding: [{
-                        system: 'http://snomed.info/sct',
-                        code: '288495006',
-                        display: 'Estimated date of delivery'
-                    }]
-                },
-                subject: { reference: patientReference },
-                effectiveDateTime: new Date().toISOString(),
-                valueDateTime: this.convertToISODate(eddAnswer.value)
-            });
-        }
-
-        // Last Menstrual Period
-        const lmpAnswer = this.findAnswer('0PpJy8m34vII');
-        if (lmpAnswer) {
-            observations.push({
-                resourceType: 'Observation',
-                status: 'final',
-                code: {
-                    coding: [{
-                        system: 'http://snomed.info/sct',
-                        code: '248957007',
-                        display: 'Last menstrual period'
-                    }]
-                },
-                subject: { reference: patientReference },
-                effectiveDateTime: new Date().toISOString(),
-                valueDateTime: this.convertToISODate(lmpAnswer.value)
-            });
-        }
-
-        return observations;
-    }
-
-    // Transform form data to Conditions
-    transformToConditions(patientReference: string): FHIRCondition[] {
-        const conditions: FHIRCondition[] = [];
-        const previousConditionsAnswer = this.findAnswer('URvb7tvt5DiE');
-        
-        if (previousConditionsAnswer && Array.isArray(previousConditionsAnswer.value)) {
-            const conditionMap: {[key: string]: {system: string, code: string, display: string}} = {
-                'Diabetes': {
-                    system: 'http://snomed.info/sct', 
-                    code: '73211009', 
-                    display: 'Diabetes mellitus'
-                },
-                'Hypertension': {
-                    system: 'http://snomed.info/sct', 
-                    code: '38341003', 
-                    display: 'Hypertensive disorder'
-                },
-                'C-section': {
-                    system: 'http://snomed.info/sct', 
-                    code: '265425004', 
-                    display: 'Previous cesarean section'
-                }
-            };
-
-            previousConditionsAnswer.value.forEach((conditionId: string) => {
-                const choice = previousConditionsAnswer.properties.choices.find((c: any) => c.id === conditionId);
-                if (choice && conditionMap[choice.label]) {
-                    conditions.push({
-                        resourceType: 'Condition',
-                        subject: { reference: patientReference },
-                        code: {
-                            coding: [conditionMap[choice.label]]
-                        }
-                    });
-                }
-            });
-        }
-
-        return conditions;
-    }
-
-    // Utility method to convert DD/MM/YYYY to YYYY-MM-DD
-    private convertToISODate(dateString?: string): string | undefined {
-        if (!dateString) return undefined;
-        const [day, month, year] = dateString.split('/');
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Map marital status to FHIR coding
-    private mapMaritalStatus(statusId?: string) {
-        const statusMap: {[key: string]: string} = {
-            'Ks6ScmF0MM7B': 'S', // Single
-            'PSZW0omZQ4ik': 'M', // Married
-            '9AZBrDrLoqC3': 'D', // Divorced
-            'IJWrg2pvWOUy': 'W'  // Widowed
-        };
-
-        if (!statusId) return undefined;
-
-        return {
+            value: data?.user?.nationalId
+        }],
+        active: true,
+        name: [{
+            use: 'official',
+            family: data.user.lastName,
+            given: [data.user.firstName]
+        }],
+        telecom: [{
+            system: 'phone',
+            value: data.user.phoneNumber,
+            use: 'mobile'
+        }],
+        gender: 'female',
+        birthDate: data.user.dateOfBirth,
+        maritalStatus: {
             coding: [{
                 system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus',
-                code: statusMap[statusId],
-                display: statusId
+                code: getMaritalStatusCode(data.user.maritalStatus)
             }]
-        };
+        }
+    };
+
+    const questionnaireResponse: FhirResource = {
+        resourceType: 'QuestionnaireResponse',
+        id: `${uuidv4()}`,
+        subject: {
+            reference: `Patient/${patientId}`
+        },
+
     }
 
-    // Map nationality to gender (approximation)
-    private mapGender(nationalityId?: string): 'male' | 'female' | 'other' | 'unknown' {
-        return 'female'; // This is a pregnancy form, so defaulting to female
+    // Create LMP Observation
+    const lmpObservation: FhirResource = {
+        resourceType: 'Observation',
+        id: `${uuidv4()}`,
+        meta: {
+            profile: ['http://hl7.org/fhir/StructureDefinition/lastmenstrualperiod']
+        },
+        status: 'final',
+        code: {
+            coding: [{
+                system: 'http://loinc.org',
+                code: '8665-2',
+                display: 'Last menstrual period start date'
+            }]
+        },
+        subject: {
+            reference: `Patient/${patientId}`
+        },
+        effectiveDateTime: data.medical.lastMenstrualPeriod,
+        valueDateTime: data.medical.lastMenstrualPeriod
+    };
+
+    // Create bundle entries
+    const entries: BundleEntry[] = [
+        {
+            // fullUrl: `urn:uuid:${patient.id}`,
+            resource: patient,
+            request: {
+                method: 'POST',
+                url: 'Patient'
+            }
+        },
+        {
+            // fullUrl: `urn:uuid:${lmpObservation.id}`,
+            resource: lmpObservation,
+            request: {
+                method: 'POST',
+                url: 'Observation'
+            }
+        },
+        {
+            // fullUrl: `urn:uuid:${lmpObservation.id}`,
+            resource: questionnaireResponse,
+            request: {
+                method: 'POST',
+                url: 'Observation'
+            }
+        }
+    ];
+
+    // Add pregnancy history if applicable
+    if (data.medical.previouslyPregnant) {
+        const pregnancyHistory: FhirResource = createPregnancyHistory(
+            patientId,
+            data.medical.previousPregnancyComplications || []
+        );
+        entries.push({
+            // fullUrl: `urn:uuid:${pregnancyHistory.id}`,
+            resource: pregnancyHistory,
+            request: {
+                method: 'POST',
+                url: 'Observation'
+            }
+        });
     }
-}
+
+    // Add current health conditions if any
+    if (data.medical.hasHealthConditions && data.medical.currentHealthConditions) {
+        data.medical.currentHealthConditions.forEach(condition => {
+            const conditionResource = createCondition(patientId, condition);
+            entries.push({
+                // fullUrl: `urn:uuid:${conditionResource.id}`,
+                resource: conditionResource,
+                request: {
+                    method: 'POST',
+                    url: 'Condition'
+                }
+            });
+        });
+    }
+
+    return {
+        resourceType: 'Bundle',
+        type: 'transaction',
+        entry: entries
+    };
+};
+
+const getMaritalStatusCode = (status: string): string => {
+    const codes: { [key: string]: string } = {
+        'single': 'S',
+        'married': 'M',
+        'divorced': 'D',
+        'widowed': 'W'
+    };
+    return codes[status.toLowerCase()] || 'UNK';
+};
+
+const createPregnancyHistory = (patientId: string, complications: string[]): FhirResource => {
+    const resource: FhirResource = {
+        resourceType: 'Observation',
+        id: `pregnancy-history-${uuidv4()}`,
+        meta: {
+            profile: ['http://hl7.org/fhir/StructureDefinition/pregnancy-history']
+        },
+        status: 'final',
+        code: {
+            coding: [{
+                system: 'http://loinc.org',
+                code: '11449-6',
+                display: 'Pregnancy history'
+            }]
+        },
+        subject: {
+            reference: `Patient/${patientId}`
+        },
+        valueCodeableConcept: {
+            coding: [{
+                system: 'http://snomed.info/sct',
+                code: '102874004',
+                display: 'Previous pregnancies'
+            }]
+        }
+    };
+
+    if (complications.length > 0) {
+        resource.component = complications.map(complication => ({
+            code: {
+                coding: [{
+                    system: 'http://snomed.info/sct',
+                    code: getComplicationCode(complication),
+                    display: complication
+                }]
+            },
+            valueBoolean: true
+        }));
+    }
+
+    return resource;
+};
+
+const createCondition = (patientId: string, condition: string): FhirResource => {
+    return {
+        resourceType: 'Condition',
+        id: `condition-${uuidv4()}`,
+        clinicalStatus: {
+            coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/condition-clinical',
+                code: 'active',
+                display: 'Active'
+            }]
+        },
+        verificationStatus: {
+            coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
+                code: 'confirmed',
+                display: 'Confirmed'
+            }]
+        },
+        category: [{
+            coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/condition-category',
+                code: 'problem-list-item',
+                display: 'Problem List Item'
+            }]
+        }],
+        code: {
+            coding: [{
+                system: 'http://snomed.info/sct',
+                code: getConditionCode(condition),
+                display: condition
+            }]
+        },
+        subject: {
+            reference: `Patient/${patientId}`
+        }
+    };
+};
+
+const getComplicationCode = (complication: string): string => {
+    const codes: { [key: string]: string } = {
+        'Diabetes': '73211009',
+        'Hypertension': '38341003',
+        'Preterm Birth': '367498001',
+        'Antepartum Hemorrhage': '270486005',
+        'Postpartum Hemorrhage': '289530006',
+        'C-section': '11466000',
+        'Fetal Loss': '35714002'
+    };
+    return codes[complication] || 'unknown';
+};
+
+const getConditionCode = (condition: string): string => {
+    const codes: { [key: string]: string } = {
+        'Diabetes': '73211009',
+        'Hypertension': '38341003',
+        'Anemia': '271737000'
+    };
+    return codes[condition] || 'unknown';
+};
+
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original string if invalid date
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+};
+
+
+
+export const processJsonData = (jsonData: any) => {
+    // Helper function to find answer by field ID
+    const findAnswer = (fieldId: string) => {
+        return jsonData.answers.find((answer: any) => answer.id === fieldId);
+    };
+
+    // Helper function to get multiple choice value
+    const getMultiChoiceValue = (answer: any) => {
+        if (!answer?.value?.value?.[0]) return '';
+        return answer.properties.choices.find(
+            (choice: any) => choice.id === answer.value.value[0]
+        )?.label || '';
+    };
+
+    // Process JSON data into expected format
+    const processedData = {
+        id: jsonData.id,
+        user: {
+            firstName: findAnswer('5WZjaP6dL65q')?.value?.firstName || '',
+            lastName: findAnswer('5WZjaP6dL65q')?.value?.lastName || '',
+            phoneNumber: findAnswer('BdwJijjrb8TR')?.value || '',
+            dateOfBirth: formatDate(findAnswer('IdSaw1CLBrNx')?.value) || '',
+            maritalStatus: getMultiChoiceValue(findAnswer('d4rox3pBjUkJ')),
+            nationality: getMultiChoiceValue(findAnswer('5V4y2SHD5Ajq')),
+            nationalId: findAnswer('t0BJ95juc6zT')?.value?.toString() || ''
+        },
+        medical: {
+            lastMenstrualPeriod: formatDate(findAnswer('Z57KvxvsYjEy')?.value) || '',
+            previouslyPregnant: getMultiChoiceValue(findAnswer('9NZvbl8vJpDN')) === 'Yes',
+            previousPregnancyComplications: [], // Only relevant if previously pregnant
+            hasHealthConditions: getMultiChoiceValue(findAnswer('ADdot9NuxOL6')) === 'Yes',
+            currentHealthConditions: [] // Only populated if hasHealthConditions is true
+        }
+    };
+
+    // If previously pregnant, get complications
+    if (processedData.medical.previouslyPregnant) {
+        const complications = findAnswer('FqMsYCBqgfTr');
+        if (complications?.value?.value) {
+            processedData.medical.previousPregnancyComplications = complications.properties.choices
+                .filter((choice: any) => complications.value.value.includes(choice.id))
+                .map((choice: any) => choice.label);
+        }
+    }
+
+    // If has health conditions, get current conditions
+    if (processedData.medical.hasHealthConditions) {
+        const conditions = findAnswer('xtbPgjY6jVD7');
+        if (conditions?.value?.value) {
+            processedData.medical.currentHealthConditions = conditions.properties.choices
+                .filter((choice: any) => conditions.value.value.includes(choice.id))
+                .map((choice: any) => choice.label);
+        }
+    }
+
+    return processedData;
+};

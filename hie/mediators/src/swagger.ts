@@ -8,7 +8,7 @@ const options: swaggerJSDoc.Options = {
     info: {
       title: 'MamaToto Mediators API',
       version: '1.0.0',
-      description: 'Description of my Express API',
+      description: 'MamaToto HIE Mediators for Beneficiary Enrollment & Maternal Hybrid Care Model',
     },
     servers: [
       {
@@ -16,7 +16,7 @@ const options: swaggerJSDoc.Options = {
       },
     ],
   },
-  apis: ['./routes/*.ts'], // Path to the API routes and controllers
+  apis: ['./src/routes/*.ts'], // Path to the API routes and controllers
 };
 
 const swaggerSpec = swaggerJSDoc(options);
