@@ -1,0 +1,17 @@
+{
+  "id": "custom-mediation-services",
+  "name": "Custom - Mediation Services",
+  "description": "A custom package which creates services for handling the Async processing of messages",
+  "type": "infrastructure",
+  "version": "0.0.1",
+  "dependencies": [
+    "message-bus-kafka"
+  ],
+  "environmentVariables": {
+    "KAFKA_HOSTS": "kafka-01:9092",
+    "KAFKA_CLIENT_ID": "custom-mediation-service",
+    "SHIF_PATIENT_PROFILE_ID": "shif-patient",
+    "CLIENT_REGISTRY_API_HOST": "https://client-registry.tiberbu.com/api/resource/Client Registry",
+    "CLIENT_REGISTRY_AUTH_TOKEN": "Token/Bearer <token>"
+  }
+}

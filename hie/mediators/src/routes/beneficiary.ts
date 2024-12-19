@@ -3,6 +3,7 @@ import { FhirApi, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
 import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
+import { processJsonData, transformToFhir } from '../lib/heyforms';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
@@ -489,6 +490,32 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
       }]
     });
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
+    return;
+  }
+});
+
+
+router.post('/webform', async (req, res) => {
+  try {
+    const processedData = processJsonData(req.body);
+    const bundle = transformToFhir(processedData);
+
+    let shrResponse = await (
+      await FhirApi({
+        url: "/",
+        method: "POST",
+        data: JSON.stringify(bundle),
+      })
+    ).data;
+    // console.log(bundle);
+    res.json(shrResponse);
+    return;
+  } catch (error) {
+    console.error('Error transforming to FHIR:', error);
+    res.status(500).json({
+      error: 'Error transforming data to FHIR format',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
     return;
   }
 });

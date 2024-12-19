@@ -1,17 +1,17 @@
 {
-    "urn": "urn:custom-registation:whatsapp",
+    "urn": "urn:webform-beneficiary:ips",
     "version": "1.0.0",
-    "name": "Custom Registration Mediator",
-    "description": "This mediator is responsible for processing the CarePay Beneficiary Payload.",
+    "name": "WebForm Beneficiary Mediator",
+    "description": "This mediator is responsible for processing the Heyforms Beneficiary Payload.",
     "defaultChannelConfig": [
         {
-            "name": "Custom Registration Workflow Channel",
-            "urlPattern": "^/custom/.*$",
+            "name": "WebForm Beneficiary Channel",
+            "urlPattern": "/beneficiary/webform",
             "routes": [
                 {
-                    "name": "Custom Registration Route",
+                    "name": "WebForm Beneficiary Route",
                     "host": "mediators",
-                    "pathTransform": "s/\\/\\/.*$//",
+                    "path": "/beneficiary/webform",
                     "port": "3000",
                     "primary": true,
                     "type": "http",
@@ -23,16 +23,16 @@
                 "*"
             ],
             "methods": [
-                "POST", "GET", "PUT"
+                "POST"
             ],
             "type": "http"
         }
     ],
     "endpoints": [
         {
-            "name": "Custom Registration Endpoint",
+            "name": "Webform Beneficiary Endpoint",
             "host": "mediators",
-            "path": "/custom",
+            "path": "/beneficiary/webform",
             "port": "3000",
             "primary": true,
             "type": "http",

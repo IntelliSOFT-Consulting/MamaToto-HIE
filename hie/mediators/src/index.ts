@@ -2,11 +2,14 @@ import express from "express";
 import cors from 'cors'
 import * as dotenv from 'dotenv'
 import cron from 'node-cron';
+import { setupSwagger } from "./swagger";
 
 dotenv.config() // Load environment variables
 
+const CRON_INTERVAL = Number(process.env.CRON_INTERVAL ?? 10); // set interval for cron jobs
+
+
 //Import routes 
-const CRON_INTERVAL = Number(process.env.CRON_INTERVAL ?? 10);
 
 import Auth from './routes/auth';
 import Beneficiary from './routes/beneficiary';
@@ -22,6 +25,8 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors())
+
+setupSwagger(app);
 
 app.use((req, res, next) => {
   try {

@@ -15,6 +15,86 @@ export const router = express.Router();
 
 router.use(express.json());
 
+/**
+ * @openapi
+ * /turn:
+ *   post:
+ *     summary: Turn.io Messaging Integration Endpoint
+ *     description: >
+ *       Handles sending messages via Turn.io WhatsApp integration with advanced error handling.
+ *       Supports different message types and manages active session scenarios.
+ *     tags:
+ *       - Turn.io Integration
+ * 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - phone
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Type of message/action
+ *                 enum: 
+ *                   - SURVEY_FOLLOW_UP
+ *                   - ENROLMENT_CONFIRMATION
+ *                   - ENROLMENT_REJECTION
+ *               phone:
+ *                 type: string
+ *                 description: Phone number in international format
+ *                 example: "+1234567890"
+ * 
+ *     responses:
+ *       200:
+ *         description: Successful Turn.io message sending
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ * 
+ *       400:
+ *         description: Error in processing request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                 details:
+ *                   type: object
+ * 
+ *     security:
+ *       - bearerAuth: []
+ * 
+ *     x-codeSamples:
+ *       - lang: 'JavaScript'
+ *         source: |
+ *           fetch('/turn', {
+ *             method: 'POST',
+ *             headers: { 'Content-Type': 'application/json' },
+ *             body: JSON.stringify({
+ *               type: 'ENROLMENT_CONFIRMATION',
+ *               phone: '+1234567890'
+ *             })
+ *           })
+ * 
+ *     x-scenarios:
+ *       - name: Standard Message
+ *         description: Send a standard enrolment confirmation message
+ *       - name: Active Session Handling
+ *         description: Automatically handles and resolves active session conflicts
+ */
+
 //process FHIR Beneficiary
 router.post('/turn', async (req, res) => {
     try {
@@ -65,5 +145,47 @@ router.post('/turn', async (req, res) => {
         return;
     }
 });
+
+/**
+ * @openapi
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ * 
+ *   schemas:
+ *     TurnIoRequest:
+ *       type: object
+ *       required:
+ *         - type
+ *         - phone
+ *       properties:
+ *         type:
+ *           type: string
+ *           enum: 
+ *             - SURVEY_FOLLOW_UP
+ *             - ENROLMENT_CONFIRMATION
+ *             - ENROLMENT_REJECTION
+ *         phone:
+ *           type: string
+ *           description: Phone number with country code
+ * 
+ *     TurnIoResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               details:
+ *                 type: string
+ */
 
 export default router;

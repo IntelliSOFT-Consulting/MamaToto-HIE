@@ -6,8 +6,124 @@ export const router = express.Router();
 
 router.use(express.json());
 
+/**
+ * @openapi
+ * /notifications/Encounter/{id}:
+ *   put:
+ *     summary: Process FHIR Encounter Notification
+ *     description: >
+ *       Handles notification processing for a completed Encounter:
+ *       - Checks Encounter status
+ *       - Verifies status change
+ *       - Sends follow-up survey notification via Turn.io
+ *     tags:
+ *       - FHIR Notifications
+ *       - Encounters
+ * 
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: FHIR Encounter resource ID
+ * 
+ *     responses:
+ *       200:
+ *         description: Successful Encounter processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/Encounter'
+ *                 - $ref: '#/components/schemas/TurnNotificationResponse'
+ *       400:
+ *         description: Error in processing Encounter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OperationOutcome'
+ * 
+ *     x-workflow:
+ *       steps:
+ *         - Retrieve Encounter by ID
+ *         - Validate Encounter status
+ *         - Check previous Encounter version
+ *         - Retrieve associated Patient
+ *         - Send Turn.io notification
+ * 
+ *     x-error-handling:
+ *       - Checks for completed Encounter
+ *       - Validates status change
+ *       - Handles notification send failures
+ */
 
-//process FHIR beneficiary
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Encounter:
+ *       type: object
+ *       properties:
+ *         resourceType:
+ *           type: string
+ *           enum: ['Encounter']
+ *         status:
+ *           type: string
+ *           enum: ['planned', 'in-progress', 'finished', 'cancelled']
+ *         subject:
+ *           type: object
+ *           properties:
+ *             reference:
+ *               type: string
+ *               description: Reference to Patient resource
+ *         meta:
+ *           type: object
+ *           properties:
+ *             versionId:
+ *               type: string
+ *             tag:
+ *               type: array
+ *               items:
+ *                 type: object
+ * 
+ *     TurnNotificationResponse:
+ *       type: object
+ *       properties:
+ *         code:
+ *           type: number
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ * 
+ *     OperationOutcome:
+ *       type: object
+ *       properties:
+ *         resourceType:
+ *           type: string
+ *           enum: ['OperationOutcome']
+ *         id:
+ *           type: string
+ *         issue:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               severity:
+ *                 type: string
+ *                 enum: ['error']
+ *               code:
+ *                 type: string
+ *                 enum: ['exception']
+ *               details:
+ *                 type: object
+ *                 properties:
+ *                   text:
+ *                     type: string
+ */
+
+//process FHIR Subscriptions for Encounters
 router.put('/notifications/Encounter/:id', async (req, res) => {
   try {
     let { id } = req.params;
