@@ -2,7 +2,7 @@
   "version": "1.18.2",
   "minimumCoreVersion": "5.2.0",
   "protocol": "https",
-  "host": "openhim-comms.mamatoto.pharmaccess.io",
+  "host": "openhim-core-mamatoto.intellisoftkenya.com",
   "hostPath": "",
   "port": "",
   "title": "Admin Console",

@@ -3,6 +3,7 @@ import shrMediatorConfig from '../config/shrMediatorConfig.json';
 import carepayBeneficiary from '../config/beneficiaryMediator.json'
 import turnioMediatorConfig from '../config/turnioNotificationsMediator.json';
 import customRegistrationConfig from '../config/customRegistrationMediators.json'
+import utilsConfig from '../config/utilsMediator.json'
 
 import { Agent } from 'https';
 import * as crypto from 'crypto';
@@ -15,7 +16,8 @@ const mediators = [
     shrMediatorConfig,
     carepayBeneficiary,
     turnioMediatorConfig,
-    customRegistrationConfig
+    customRegistrationConfig,
+    utilsConfig
 ];
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>

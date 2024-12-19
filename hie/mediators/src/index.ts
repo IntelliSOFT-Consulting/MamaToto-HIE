@@ -13,6 +13,7 @@ import Beneficiary from './routes/beneficiary';
 import Visit from './routes/visit';
 import Callback from './routes/callback';
 import Custom from './routes/custom';
+import Utils from './routes/tempUtils';
 
 import { fetchApprovedEndorsements, fetchVisits } from "./lib/payloadMapping";
 
@@ -39,6 +40,8 @@ app.use('/beneficiary', Beneficiary)
 app.use('/visit', Visit)
 app.use('/callback', Callback)
 app.use('/custom', Custom)
+app.use('/utils', Utils)
+
 
 
 
@@ -50,6 +53,6 @@ app.listen(PORT, () => {
 cron.schedule(`*/${CRON_INTERVAL} * * * *`, () => {
   console.log(`Cron job running every ${CRON_INTERVAL} minutes`);
   fetchVisits();
-  fetchApprovedEndorsements()
+  fetchApprovedEndorsements();
 });
 

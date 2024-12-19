@@ -13,7 +13,7 @@ router.put('/notifications/Encounter/:id', async (req, res) => {
     let { id } = req.params;
     let data = await (await FhirApi({ url: `/Encounter/${id}` })).data;
     let tag = data.meta?.tag ?? null;
-    // console.log(parsedIds);
+    console.log(data.status);
 
     // console.log(tag, identifiers);
     if (data.status !== "finished") {

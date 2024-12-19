@@ -1,0 +1,43 @@
+{
+    "urn": "urn:custom-utils:whatsapp",
+    "version": "1.0.0",
+    "name": "Custom Utils Mediator",
+    "description": "This mediator is responsible for Custom Utils.",
+    "defaultChannelConfig": [
+        {
+            "name": "Custom Utils",
+            "urlPattern": "^/utils/.*$",
+            "routes": [
+                {
+                    "name": "Custom Utils",
+                    "host": "mediators",
+                    "pathTransform": "s/\/\/.*$/",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "GET", "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Custom Utils",
+            "host": "mediators",
+            "path": "/utils",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}
