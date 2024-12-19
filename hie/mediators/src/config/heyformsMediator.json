@@ -1,0 +1,43 @@
+{
+    "urn": "urn:webform-beneficiary:ips",
+    "version": "1.0.0",
+    "name": "WebForm Beneficiary Mediator",
+    "description": "This mediator is responsible for processing the Heyforms Beneficiary Payload.",
+    "defaultChannelConfig": [
+        {
+            "name": "WebForm Beneficiary Channel",
+            "urlPattern": "/beneficiary/webform",
+            "routes": [
+                {
+                    "name": "WebForm Beneficiary Route",
+                    "host": "mediators",
+                    "path": "/beneficiary/webform",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Webform Beneficiary Endpoint",
+            "host": "mediators",
+            "path": "/beneficiary/webform",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}

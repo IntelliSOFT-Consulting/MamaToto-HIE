@@ -1,30 +1,81 @@
-projectName: MamaToto
+# projectName: MamaToto
+# image: jembi/platform:latest
+# logPath: /tmp/logs
+
+# packages:
+#   - reverse-proxy-nginx
+#   - identity-access-manager-keycloak
+
+# customPackages:
+#   - id: mamatoto-datastore-hapi-fhir
+#     path: ./mamatoto-datastore-hapi-fhir
+  
+#   - id: mamatoto-interoperability-layer-openhim
+#     path: ./mamatoto-interoperability-layer-openhim
+
+#   - id: mamatoto-openhim-mediators
+#     path: ./mamatoto-openhim-mediators
+
+# profiles:
+#   - name: mamatoto
+#     packages:
+#       - mamatoto-interoperability-layer-openhim
+#       - reverse-proxy-nginx
+#       - mamatoto-datastore-hapi-fhir
+#       - mamatoto-openhim-mediators
+#       - identity-access-manager-keycloak
+#     envFiles:
+#       - .env
+#     dev: true
+#     only: true
+
+---
+projectName: mamatoto-hie-on-platform
 image: jembi/platform:latest
 logPath: /tmp/logs
 
 packages:
   - reverse-proxy-nginx
   - identity-access-manager-keycloak
+  - interoperability-layer-openhim
+  - fhir-datastore-hapi-fhir
 
 customPackages:
-  - id: mamatoto-datastore-hapi-fhir
-    path: ./mamatoto-datastore-hapi-fhir
-  
-  - id: mamatoto-interoperability-layer-openhim
-    path: ./mamatoto-interoperability-layer-openhim
-
-  - id: mamatoto-openhim-mediators
-    path: ./mamatoto-openhim-mediators
+  - id: fhir-datastore-hapi-fhir # override
+    path: ./packages/fhir-datastore-hapi-fhir
+  - id: interoperability-layer-openhim # override
+    path: ./packages/interoperability-layer-openhim
+  - id: custom-mediation-services # custom - Validation/splitter + Persistance services
+    path: ./packages/custom-mediation-services
+  - id: mock-claims-post-office # custom
+    path: ./packages/mock-claims-post-office
 
 profiles:
-  - name: mamatoto
+  # Local Deployment
+  - name: local
     packages:
-      - mamatoto-interoperability-layer-openhim
-      - reverse-proxy-nginx
-      - mamatoto-datastore-hapi-fhir
-      - mamatoto-openhim-mediators
       - identity-access-manager-keycloak
+      - interoperability-layer-openhim
+      - fhir-datastore-hapi-fhir
+      - message-bus-kafka
+      - custom-mediation-services
+      - mock-claims-post-office
     envFiles:
-      - .env
+      - ./.env.local
     dev: true
-    only: true
+
+  # # Staging Deployment
+  # - name: staging
+  #   packages:
+  #     - reverse-proxy-nginx
+  #     - identity-access-manager-keycloak
+  #     - interoperability-layer-openhim
+  #     - fhir-datastore-hapi-fhir
+  #     - message-bus-kafka
+  #     - message-bus-kafka-zookeeper
+  #     - mediator-validation-splitter
+  #     - mediator-persistance
+  #     - mock-claims-post-office
+  #   envFiles:
+  #     - ./.env.staging
+  #   dev: false

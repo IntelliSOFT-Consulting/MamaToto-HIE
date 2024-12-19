@@ -1,0 +1,23 @@
+services:
+  custom-validation-splitter-service:
+    image: kenya-hie/custom-mediation-service:local
+    networks:
+      public:
+      default:
+    environment:
+      KAFKA_HOSTS: ${KAFKA_HOSTS}
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
+  custom-persistance-service:
+    image: mamatoto-hie/custom-mediation-service:local
+    networks:
+      public:
+      default:
+    environment:
+      KAFKA_HOSTS: ${KAFKA_HOSTS}
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
+
+networks:
+  public:
+    name: kafka_public
+    external: true
+  default:
