@@ -1,0 +1,25 @@
+services:
+  mediators:
+    image: mediators:local
+    networks:
+      public:
+      default:
+    environment:
+      KAFKA_HOSTS: ${KAFKA_HOSTS}
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
+  
+  matchbox:
+    container_name: matchbox
+    image: intellisoftkenya/matchbox:latest
+    networks:
+      public:
+      default:
+    restart: always
+    ports:
+      - "8096:8080"
+
+networks:
+  public:
+    name: kafka_public
+    external: true
+  default:

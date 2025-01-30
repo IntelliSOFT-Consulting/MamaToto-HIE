@@ -6,12 +6,15 @@ networks:
 services:
     matchbox:
         container_name: matchbox
-        image: intellisoftkenya/matchbox:latest
+        # image: intellisoftkenya/matchbox:latest
+        image: europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v3.9.10
         networks:
             - cloudbuild
         restart: always
         ports:
             - "8096:8080"
-        # volumes:
-            # - /opt/smart-hiv/matchbox/matchbox-server/with-cda:/config
+        volumes:
+            - ./with-cda:/config
+            # - ./with-settings:/config
+
 

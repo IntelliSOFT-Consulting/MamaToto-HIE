@@ -23,12 +23,9 @@ const mediators = [
     carepayBeneficiary,
     turnioMediatorConfig,
     customRegistrationConfig,
-<<<<<<< HEAD
-    utilsConfig
-=======
+    utilsConfig,
     clientRegistryConfig,
     heyformsConfig
->>>>>>> bb27d21655d312b690ecc3e7df6297f60000730b
 ];
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>
@@ -120,6 +117,18 @@ export const FhirApi = async (params: any) => {
     }
 }
 
+
+export const OperationOutcome =  (text: string) => {
+    return {
+        "resourceType": "OperationOutcome",
+        "id": "exception",
+        "issue": [{
+          "severity": "error",
+          "code": "exception",
+          "details": { text }
+        }]
+      }
+}
 
 // a fetch wrapper for HAPI FHIR server.
 export const ClientRegistryApi = async (params: any) => {

@@ -16,6 +16,7 @@ import Beneficiary from './routes/beneficiary';
 import Visit from './routes/visit';
 import Callback from './routes/callback';
 import Custom from './routes/custom';
+import BabyEnrolment from './routes/babyEnrolment';
 import Utils from './routes/tempUtils';
 
 import { fetchApprovedEndorsements, fetchVisits } from "./lib/payloadMapping";
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
 
 app.use('/auth', Auth)
 app.use('/beneficiary', Beneficiary)
+app.use('/beneficiary/infant', BabyEnrolment)
 app.use('/visit', Visit)
 app.use('/callback', Callback)
 app.use('/custom', Custom)
