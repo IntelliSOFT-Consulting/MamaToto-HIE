@@ -3,13 +3,9 @@ import shrMediatorConfig from '../config/shrMediatorConfig.json';
 import carepayBeneficiary from '../config/beneficiaryMediator.json'
 import turnioMediatorConfig from '../config/turnioNotificationsMediator.json';
 import customRegistrationConfig from '../config/customRegistrationMediators.json'
-<<<<<<< HEAD
-import utilsConfig from '../config/utilsMediator.json'
-=======
 import clientRegistryConfig from '../config/clientRegistryMediator.json'
 import heyformsConfig from '../config/heyformsMediator.json'
 
->>>>>>> bb27d21655d312b690ecc3e7df6297f60000730b
 
 import { Agent } from 'https';
 import * as crypto from 'crypto';
@@ -23,7 +19,7 @@ const mediators = [
     carepayBeneficiary,
     turnioMediatorConfig,
     customRegistrationConfig,
-    utilsConfig,
+    // utilsConfig,
     clientRegistryConfig,
     heyformsConfig
 ];
