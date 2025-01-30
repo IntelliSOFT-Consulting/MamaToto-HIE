@@ -1,150 +1,77 @@
-import express from 'express';
-import { Router, Request, Response } from 'express';
-import { FhirApi } from '../lib/utils';
+import express from "express";
+import { v4 as uuidv4 } from "uuid";
 
-// Interfaces for the form data
-interface FormAnswer {
-  id: string;
-  title: string;
-  kind: string;
-  value: any;
-  properties?: {
-    format?: string;
-    allowTime?: boolean;
-    choices?: Array<{
-      id: string;
-      label: string;
-    }>;
-  };
-}
+const router = express.Router();
 
-interface FormData {
-  id: string;
-  formId: string;
-  formName: string;
-  answers: FormAnswer[];
-  hiddenFields: Array<{
-    id: string;
-    name: string;
-    value: string;
-  }>;
-}
-
-// FHIR interfaces
-interface FHIRBundle {
-  resourceType: 'Bundle';
-  type: 'transaction';
-  entry: Array<{
-    fullUrl: string;
-    resource: any;
-    request: {
-      method: string;
-      url: string;
-    };
-  }>;
-}
-
-interface FHIRPatient {
-  resourceType: 'Patient';
-  id?: string;
-  name: Array<{
-    use: string;
-    family: string;
-    given: string[];
-  }>;
-  gender: 'male' | 'female' | 'other' | 'unknown';
-  birthDate: string;
-  link?: Array<{
-    other: {
-      reference: string;
-    };
-    // type: 'seealso' | 'replaced-by' | 'replaces' | 'refer' | 'mother';
-  }>;
-}
-
-const router: Router = express.Router();
-
-// Helper function to transform date format from DD/MM/YYYY to YYYY-MM-DD
-const transformDate = (date: string): string => {
-  const [day, month, year] = date.split('/');
-  return `${year}-${month}-${day}`;
-};
-
-// Helper function to get gender value
-const getGender = (formAnswer: FormAnswer): 'male' | 'female' => {
-  const genderChoice = formAnswer.properties?.choices?.find(
-    choice => choice.id === formAnswer.value.value[0]
-  );
-  return genderChoice?.label.toLowerCase() as 'male' | 'female';
-};
-
-router.post('/', async (req: Request, res: Response) => {
+router.post("/", (req, res) => {
   try {
-    const formData: FormData = req.body;
+    const payload = req.body;
 
-    // Find relevant answers
-    const nameAnswer = formData.answers.find(a => a.kind === 'full_name');
-    const dateAnswer = formData.answers.find(a => a.kind === 'date');
-    const genderAnswer = formData.answers.find(a => a.kind === 'multiple_choice');
-    const motherIdAnswer = formData.answers.find(a => a.kind === 'number');
-
-    if (!nameAnswer || !dateAnswer || !genderAnswer || !motherIdAnswer) {
-      throw new Error('Missing required form fields');
+    if (!payload || !payload.answers) {
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
-    // Create Patient resource for the child
-    const patientResource: FHIRPatient = {
-      resourceType: 'Patient',
-      id: formData.id,
-      name: [
-        {
-          use: 'official',
-          family: nameAnswer.value.lastName,
-          given: [nameAnswer.value.firstName]
-        }
-      ],
-      gender: getGender(genderAnswer),
-      birthDate: transformDate(dateAnswer.value),
-      link: [
-        {
-          other: {
-            reference: `Patient/${motherIdAnswer.value}`
-          }
-        }
+    // Extract answers
+    const answers = payload.answers.reduce((acc: any, field: any) => {
+      acc[field.id] = field.value;
+      return acc;
+    }, {});
+
+    // Convert date format (DD/MM/YYYY -> YYYY-MM-DD)
+    const formatDate = (dateStr: string) => {
+      const [day, month, year] = dateStr.split("/");
+      return `${year}-${month}-${day}`;
+    };
+
+    // Extract gender safely
+    const genderAnswer = answers["ZRNqwtLAyAlr"]?.value?.value;
+    const gender = genderAnswer && genderAnswer.length > 0 ?
+      (genderAnswer[0] === "PfiESRthYg2f" ? "male" : "female") : undefined;
+
+    // FHIR Patient Resource for the child
+    const patient = {
+      resourceType: "Patient",
+      id: uuidv4(),
+      name: [{
+        given: [answers["1WLpdlhdUoOi"]?.firstName || "Unknown"],
+        family: answers["1WLpdlhdUoOi"]?.lastName || "Unknown"
+      }],
+      gender: gender || "unknown", // Default to "unknown" if gender is not provided
+      birthDate: answers["wfD0VClrONfM"] ? formatDate(answers["wfD0VClrONfM"]) : undefined
+    };
+
+
+    // FHIR RelatedPerson Resource for the mother
+    const relatedPerson = {
+      resourceType: "RelatedPerson",
+      id: uuidv4(),
+      patient: { reference: `Patient/${patient.id}` },
+      identifier: [{
+        system: "http://example.org/national-id",
+        value: answers["NI57snEmn4bR"].toString()
+      }],
+      relationship: [{
+        coding: [{ system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode", code: "MTH", display: "Mother" }]
+      }]
+    };
+
+    // FHIR Bundle
+    const bundle = {
+      resourceType: "Bundle",
+      type: "transaction",
+      entry: [
+        { resource: patient, request: { method: "POST", url: "Patient" } },
+        { resource: relatedPerson, request: { method: "POST", url: "RelatedPerson" } }
       ]
     };
 
-    // Create the FHIR Bundle
-    const bundle: FHIRBundle = {
-      resourceType: 'Bundle',
-      type: 'transaction',
-      entry: [
-        {
-          fullUrl: `urn:uuid:${formData.id}`,
-          resource: patientResource,
-          request: {
-            method: 'POST',
-            url: 'Patient'
-          }
-        }
-      ]
-    };
-    let shrResponse = await (
-          await FhirApi({
-            url: "/",
-            method: "POST",
-            data: JSON.stringify(bundle),
-          })
-        ).data;
-        // console.log(bundle);
-    res.json(shrResponse);
+    res.json(bundle);
     return;
   } catch (error) {
-    res.status(400).json({
-      error: 'Failed to transform form data to FHIR Bundle',
-      details: (error as Error).message
+    res.status(500).json({
+      error: 'Error transforming data to FHIR format',
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
-    return;
   }
 });
 

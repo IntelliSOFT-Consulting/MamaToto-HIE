@@ -1,0 +1,126 @@
+{
+    "resourceType": "StructureMap",
+    "id": "mamamoto-child-enrollment",
+    "url": "http://example.org/fhir/StructureMap/mamamoto-child-enrollment",
+    "name": "MamaTotoChildEnrollment",
+    "status": "active",
+    "structure": [
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/Patient",
+        "mode": "target"
+      },
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/RelatedPerson",
+        "mode": "target"
+      },
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/Organization",
+        "mode": "target"
+      },
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/Encounter",
+        "mode": "target"
+      }
+    ],
+    "group": [
+      {
+        "name": "TransformEnrollmentData",
+        "typeMode": "none",
+        "input": [
+          {
+            "name": "source",
+            "type": "Bundle",
+            "mode": "source"
+          },
+          {
+            "name": "target",
+            "type": "Bundle",
+            "mode": "target"
+          }
+        ],
+        "rule": [
+          {
+            "name": "CreatePatient",
+            "source": [
+              {
+                "context": "source",
+                "element": "answers[id='1WLpdlhdUoOi'].value",
+                "variable": "patientName"
+              },
+              {
+                "context": "source",
+                "element": "answers[id='wfD0VClrONfM'].value",
+                "variable": "birthDate"
+              },
+              {
+                "context": "source",
+                "element": "answers[id='ZRNqwtLAyAlr'].value.value",
+                "variable": "gender"
+              }
+            ],
+            "target": [
+              {
+                "context": "target",
+                "element": "entry[0].resource",
+                "transform": "create",
+                "parameter": [
+                  {"valueString": "Patient"}
+                ]
+              },
+              {
+                "context": "entry[0].resource",
+                "element": "name[0].given",
+                "transform": "copy",
+                "parameter": [{"valueString": "%patientName.firstName"}]
+              },
+              {
+                "context": "entry[0].resource",
+                "element": "name[0].family",
+                "transform": "copy",
+                "parameter": [{"valueString": "%patientName.lastName"}]
+              },
+              {
+                "context": "entry[0].resource",
+                "element": "birthDate",
+                "transform": "copy",
+                "parameter": [{"valueString": "%birthDate"}]
+              },
+              {
+                "context": "entry[0].resource",
+                "element": "gender",
+                "transform": "copy",
+                "parameter": [{"valueString": "%gender"}]
+              }
+            ]
+          },
+          {
+            "name": "CreateRelatedPerson",
+            "source": [
+              {
+                "context": "source",
+                "element": "answers[id='NI57snEmn4bR'].value",
+                "variable": "motherId"
+              }
+            ],
+            "target": [
+              {
+                "context": "target",
+                "element": "entry[1].resource",
+                "transform": "create",
+                "parameter": [
+                  {"valueString": "RelatedPerson"}
+                ]
+              },
+              {
+                "context": "entry[1].resource",
+                "element": "identifier[0].value",
+                "transform": "copy",
+                "parameter": [{"valueString": "%motherId"}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+  

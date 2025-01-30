@@ -1,0 +1,377 @@
+{
+    "resourceType": "StructureMap",
+    "id": "mamatoto-mother-enrollment",
+    "url": "http://mamatoto.org/fhir/StructureMap/enrollment-form-to-transaction-bundle",
+    "name": "EnrollmentFormToTransactionBundle",
+    "title": "Map Enrollment Form to FHIR Transaction Bundle",
+    "status": "active",
+    "structure": [
+      {
+        "url": "http://mamatoto.org/StructureDefinition/enrollment-form",
+        "mode": "source",
+        "alias": "src"
+      },
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/Bundle",
+        "mode": "target",
+        "alias": "bundle"
+      }
+    ],
+    "group": [
+      {
+        "name": "form2bundle",
+        "typeMode": "none",
+        "input": [
+          {
+            "name": "source",
+            "type": "src",
+            "mode": "source"
+          },
+          {
+            "name": "bundle",
+            "type": "bundle",
+            "mode": "target"
+          }
+        ],
+        "rule": [
+          {
+            "name": "Bundle",
+            "source": [
+              {
+                "context": "source",
+                "element": "id"
+              }
+            ],
+            "target": [
+              {
+                "context": "bundle",
+                "element": "type",
+                "transform": "evaluate",
+                "parameter": [
+                  {
+                    "valueString": "'transaction'"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "createPatientEntry",
+        "typeMode": "none",
+        "input": [
+          {
+            "name": "source",
+            "type": "src",
+            "mode": "source"
+          },
+          {
+            "name": "bundle",
+            "type": "bundle",
+            "mode": "target"
+          }
+        ],
+        "rule": [
+          {
+            "name": "PatientEntry",
+            "source": [
+              {
+                "context": "source",
+                "element": "answers",
+                "variable": "answers"
+              }
+            ],
+            "target": [
+              {
+                "context": "bundle",
+                "element": "entry",
+                "variable": "entry"
+              }
+            ],
+            "rule": [
+              {
+                "name": "EntryFullUrl",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "fullUrl",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "'urn:uuid:' + uuid()"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "EntryRequest",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "request",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "method",
+                        "value": "POST"
+                      },
+                      {
+                        "valueString": "url",
+                        "value": "Patient"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Patient",
+                "source": [
+                  {
+                    "context": "answers",
+                    "element": "where(id = '5WZjaP6dL65q').value"
+                  }
+                ],
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "resource",
+                    "transform": "create",
+                    "parameter": [
+                      {
+                        "valueString": "Patient"
+                      }
+                    ]
+                  },
+                  {
+                    "context": "entry.resource",
+                    "element": "name",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "family",
+                        "value": "{{%source.lastName}}"
+                      },
+                      {
+                        "valueString": "given",
+                        "value": ["{{%source.firstName}}"]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "createConditionEntry",
+        "typeMode": "none",
+        "input": [
+          {
+            "name": "source",
+            "type": "src",
+            "mode": "source"
+          },
+          {
+            "name": "bundle",
+            "type": "bundle",
+            "mode": "target"
+          }
+        ],
+        "rule": [
+          {
+            "name": "ConditionEntry",
+            "source": [
+              {
+                "context": "source",
+                "element": "answers",
+                "variable": "answers"
+              }
+            ],
+            "target": [
+              {
+                "context": "bundle",
+                "element": "entry",
+                "variable": "entry"
+              }
+            ],
+            "rule": [
+              {
+                "name": "EntryFullUrl",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "fullUrl",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "'urn:uuid:' + uuid()"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "EntryRequest",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "request",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "method",
+                        "value": "POST"
+                      },
+                      {
+                        "valueString": "url",
+                        "value": "Condition"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Condition",
+                "source": [
+                  {
+                    "context": "answers",
+                    "element": "where(id = 'Z57KvxvsYjEy').value"
+                  }
+                ],
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "resource",
+                    "transform": "create",
+                    "parameter": [
+                      {
+                        "valueString": "Condition"
+                      }
+                    ]
+                  },
+                  {
+                    "context": "entry.resource",
+                    "element": "subject",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "reference",
+                        "value": "{{%bundle.entry[0].fullUrl}}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "createConsentEntry",
+        "typeMode": "none",
+        "input": [
+          {
+            "name": "source",
+            "type": "src",
+            "mode": "source"
+          },
+          {
+            "name": "bundle",
+            "type": "bundle",
+            "mode": "target"
+          }
+        ],
+        "rule": [
+          {
+            "name": "ConsentEntry",
+            "source": [
+              {
+                "context": "source",
+                "element": "answers",
+                "variable": "answers"
+              }
+            ],
+            "target": [
+              {
+                "context": "bundle",
+                "element": "entry",
+                "variable": "entry"
+              }
+            ],
+            "rule": [
+              {
+                "name": "EntryFullUrl",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "fullUrl",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "'urn:uuid:' + uuid()"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "EntryRequest",
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "request",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "method",
+                        "value": "POST"
+                      },
+                      {
+                        "valueString": "url",
+                        "value": "Consent"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Consent",
+                "source": [
+                  {
+                    "context": "answers",
+                    "element": "where(id = 'Ell2C6grLM5P').value"
+                  }
+                ],
+                "target": [
+                  {
+                    "context": "entry",
+                    "element": "resource",
+                    "transform": "create",
+                    "parameter": [
+                      {
+                        "valueString": "Consent"
+                      }
+                    ]
+                  },
+                  {
+                    "context": "entry.resource",
+                    "element": "patient",
+                    "transform": "evaluate",
+                    "parameter": [
+                      {
+                        "valueString": "reference",
+                        "value": "{{%bundle.entry[0].fullUrl}}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
