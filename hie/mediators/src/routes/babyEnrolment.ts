@@ -1,9 +1,10 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
+import { FhirApi } from "../lib/utils";
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const payload = req.body;
 
@@ -66,6 +67,16 @@ router.post("/", (req, res) => {
     };
 
     res.json(bundle);
+    let shrResponse = await (
+      await FhirApi({
+        url: "/",
+        method: "POST",
+        data: JSON.stringify(bundle),
+      })
+    ).data;
+    // console.log(bundle);
+    res.json(shrResponse);
+    return;
     return;
   } catch (error) {
     res.status(500).json({
