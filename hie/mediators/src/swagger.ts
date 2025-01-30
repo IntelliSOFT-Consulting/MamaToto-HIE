@@ -14,6 +14,12 @@ const options: swaggerJSDoc.Options = {
       {
         url: 'http://localhost:3000',
       },
+      {
+        url: 'https://openhim-core-mamatoto.intellisoftkenya.com',
+      },
+      {
+        url: 'https://openhim-core.mamatoto.pharmaccess.io',
+      }
     ],
   },
   apis: ['./src/routes/*.ts'], // Path to the API routes and controllers

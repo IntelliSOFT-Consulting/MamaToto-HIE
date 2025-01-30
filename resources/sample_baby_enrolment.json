@@ -1,0 +1,157 @@
+{
+    "id": "675bfe33b799ec0012463ae2",
+    "formId": "NDNWy7JL",
+    "formName": "Mama toto - Child enrolment",
+    "fields": [
+        {
+            "title": [
+                "This form is for enrolment of a newborn baby or child into the MamaToto program."
+            ],
+            "description": [],
+            "kind": "welcome",
+            "validations": {},
+            "properties": {
+                "buttonText": "Start"
+            },
+            "id": "r3nnXu105w3H",
+            "layout": null
+        },
+        {
+            "title": [
+                "What is the first and last name of the newborn / child?"
+            ],
+            "description": [],
+            "kind": "full_name",
+            "validations": {
+                "required": true
+            },
+            "properties": {},
+            "id": "1WLpdlhdUoOi",
+            "layout": null
+        },
+        {
+            "title": [
+                "When was the baby / child born?"
+            ],
+            "description": [],
+            "kind": "date",
+            "validations": {
+                "required": true
+            },
+            "properties": {
+                "format": "DD/MM/YYYY",
+                "allowTime": false
+            },
+            "id": "wfD0VClrONfM",
+            "layout": null
+        },
+        {
+            "title": [
+                "What is the baby's / child's gender?"
+            ],
+            "description": [],
+            "kind": "multiple_choice",
+            "validations": {},
+            "properties": {
+                "allowMultiple": false,
+                "choices": [
+                    {
+                        "id": "PfiESRthYg2f",
+                        "label": "Male"
+                    },
+                    {
+                        "id": "HaUvlrr8sbJV",
+                        "label": "Female"
+                    }
+                ]
+            },
+            "id": "ZRNqwtLAyAlr",
+            "layout": null
+        },
+        {
+            "title": [
+                "What is the national ID of the mother?"
+            ],
+            "description": [],
+            "kind": "number",
+            "validations": {
+                "required": true
+            },
+            "properties": {},
+            "id": "NI57snEmn4bR",
+            "layout": null
+        },
+        {
+            "title": [
+                "The newborn / child enrolment has been submitted."
+            ],
+            "description": [
+                [
+                    "br"
+                ]
+            ],
+            "kind": "thank_you",
+            "validations": null,
+            "properties": null,
+            "id": "Ng6yEYOiFyJX",
+            "layout": null
+        }
+    ],
+    "answers": [
+        {
+            "id": "1WLpdlhdUoOi",
+            "title": "What is the first and last name of the newborn / child?",
+            "kind": "full_name",
+            "value": {
+                "firstName": "baby",
+                "lastName": "Jaz"
+            }
+        },
+        {
+            "id": "wfD0VClrONfM",
+            "title": "When was the baby / child born?",
+            "kind": "date",
+            "properties": {
+                "format": "DD/MM/YYYY",
+                "allowTime": false
+            },
+            "value": "09/09/2024"
+        },
+        {
+            "id": "ZRNqwtLAyAlr",
+            "title": "What is the baby's / child's gender?",
+            "kind": "multiple_choice",
+            "properties": {
+                "allowMultiple": false,
+                "choices": [
+                    {
+                        "id": "PfiESRthYg2f",
+                        "label": "Male"
+                    },
+                    {
+                        "id": "HaUvlrr8sbJV",
+                        "label": "Female"
+                    }
+                ]
+            },
+            "value": {
+                "value": [
+                    "HaUvlrr8sbJV"
+                ]
+            }
+        },
+        {
+            "id": "NI57snEmn4bR",
+            "title": "What is the national ID of the mother?",
+            "kind": "number",
+            "value": 234567890
+        }
+    ],
+    "hiddenFields": [
+        {
+            "id": "Tb4z6dMe",
+            "name": "clinicref",
+            "value": "Mwangaza:20091"
+        }
+    ]
+}

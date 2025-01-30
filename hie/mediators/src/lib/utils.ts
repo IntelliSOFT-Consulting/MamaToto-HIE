@@ -113,6 +113,18 @@ export const FhirApi = async (params: any) => {
 }
 
 
+export const OperationOutcome =  (text: string) => {
+    return {
+        "resourceType": "OperationOutcome",
+        "id": "exception",
+        "issue": [{
+          "severity": "error",
+          "code": "exception",
+          "details": { text }
+        }]
+      }
+}
+
 // a fetch wrapper for HAPI FHIR server.
 export const ClientRegistryApi = async (params: any) => {
     let _defaultHeaders = { "Content-Type": 'application/json' }
