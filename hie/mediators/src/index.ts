@@ -2,7 +2,7 @@ import express from "express";
 import cors from 'cors'
 import * as dotenv from 'dotenv'
 import cron from 'node-cron';
-import { setupSwagger } from "./swagger";
+// import { setupSwagger } from "./swagger";
 
 dotenv.config() // Load environment variables
 
@@ -27,7 +27,7 @@ const PORT = 3000;
 
 app.use(cors())
 
-setupSwagger(app);
+// setupSwagger(app);
 
 app.use((req, res, next) => {
   try {

@@ -66,7 +66,7 @@ router.post("/", async (req, res) => {
       ]
     };
 
-    res.json(bundle);
+    // res.json(bundle);
     let shrResponse = await (
       await FhirApi({
         url: "/",
@@ -76,7 +76,6 @@ router.post("/", async (req, res) => {
     ).data;
     // console.log(bundle);
     res.json(shrResponse);
-    return;
     return;
   } catch (error) {
     res.status(500).json({

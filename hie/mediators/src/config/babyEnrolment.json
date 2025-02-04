@@ -1,0 +1,43 @@
+{
+    "urn": "urn:infant-beneficiary:ips",
+    "version": "1.0.0",
+    "name": "Infant Beneficiary Mediator",
+    "description": "This mediator is responsible for processing the Heyforms Beneficiary Payload.",
+    "defaultChannelConfig": [
+        {
+            "name": "Infant Beneficiary Channel",
+            "urlPattern": "/beneficiary/infant",
+            "routes": [
+                {
+                    "name": "infant Beneficiary Route",
+                    "host": "mediators",
+                    "path": "/beneficiary/infant",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Infant Beneficiary Endpoint",
+            "host": "mediators",
+            "path": "/beneficiary/infant",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}
