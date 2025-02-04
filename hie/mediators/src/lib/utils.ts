@@ -5,6 +5,8 @@ import turnioMediatorConfig from '../config/turnioNotificationsMediator.json';
 import customRegistrationConfig from '../config/customRegistrationMediators.json'
 import clientRegistryConfig from '../config/clientRegistryMediator.json'
 import heyformsConfig from '../config/heyformsMediator.json'
+import babyEnrollmentConfig from '../config/babyEnrolment.json'
+
 
 
 import { Agent } from 'https';
@@ -19,8 +21,10 @@ const mediators = [
     carepayBeneficiary,
     turnioMediatorConfig,
     customRegistrationConfig,
+    // utilsConfig,
     clientRegistryConfig,
-    heyformsConfig
+    heyformsConfig,
+    babyEnrollmentConfig
 ];
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>

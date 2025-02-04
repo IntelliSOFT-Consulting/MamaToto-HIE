@@ -27,13 +27,13 @@ const options: swaggerJSDoc.Options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 
-export function setupSwagger(app: Express) {
-  // Swagger page
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// export function setupSwagger(app: Express) {
+//   // Swagger page
+//   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-  // Docs in JSON format
-  app.get('/docs.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpec);
-  });
-}
+//   // Docs in JSON format
+//   app.get('/docs.json', (req, res) => {
+//     res.setHeader('Content-Type', 'application/json');
+//     res.send(swaggerSpec);
+//   });
+// }

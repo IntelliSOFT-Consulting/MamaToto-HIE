@@ -81,7 +81,8 @@ export const transformToFhir = (data: JsonRequest): Bundle => {
             use: 'mobile'
         }],
         gender: 'female',
-        birthDate: data.user.dateOfBirth,
+        // birthDate: data.user.dateOfBirth,
+        birthDate: new Date(data.user.dateOfBirth).toISOString().split('T')[0],
         maritalStatus: {
             coding: [{
                 system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus',
