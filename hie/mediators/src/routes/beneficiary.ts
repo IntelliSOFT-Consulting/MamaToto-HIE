@@ -279,7 +279,6 @@ router.post('/carepay', async (req, res) => {
       return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`));
     }
     res.statusCode = 200;
-    console.log(carepayResponse);
     let carepayFhirId = FhirIdentifier("http://carepay.com", "CAREPAY-MEMBER-NUMBER", "Carepay Member Number", carepayResponse.membershipNumber);
     if (!data.identifier) {
       data.identifier = [carepayFhirId];
@@ -290,7 +289,7 @@ router.post('/carepay', async (req, res) => {
     sendTurnNotification(data, "ENROLMENT_CONFIRMATION");
     return res.status(201).json(data);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
     return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(error)}`));
   }
