@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { FhirIdentifier } from './fhir';
 
 const router = Router();
 
@@ -49,7 +50,8 @@ interface FhirResource {
     [key: string]: any;
 }
 
-export const transformToFhir = (data: JsonRequest): Bundle => {
+export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
+    data = processJsonData(data);
     const patientId = `${uuidv4()}`;
 
     // console.log(data);
@@ -60,15 +62,7 @@ export const transformToFhir = (data: JsonRequest): Bundle => {
         meta: {
             profile: ['http://fhir.org/guides/who/anc-cds/StructureDefinition/anc-patient']
         },
-        identifier: [{
-            "type": {
-                "coding": [{
-                    "system": "https://terminology.hl7.org/CodeSystem-v2-0203",
-                    "code": "NI"
-                }]
-            },
-            value: data?.user?.nationalId
-        }],
+        identifier: [FhirIdentifier("http://example.org/national-id", "NI", "Kenya National ID Number",data?.user?.nationalId )],
         active: true,
         name: [{
             use: 'official',

@@ -16,9 +16,9 @@ import Beneficiary from './routes/beneficiary';
 import Visit from './routes/visit';
 import Callback from './routes/callback';
 import Custom from './routes/custom';
-import BabyEnrolment from './routes/babyEnrolment';
+import WebFormEnrollment from './routes/forms';
 
-import { fetchApprovedEndorsements, fetchVisits } from "./lib/payloadMapping";
+import { fetchApprovedEndorsements, fetchVisits } from "./lib/carepay";
 
 
 const app = express();
@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 
 app.use('/auth', Auth)
 app.use('/beneficiary', Beneficiary)
-app.use('/beneficiary/infant', BabyEnrolment)
+app.use('/forms', WebFormEnrollment)
 app.use('/visit', Visit)
 app.use('/callback', Callback)
 app.use('/custom', Custom)

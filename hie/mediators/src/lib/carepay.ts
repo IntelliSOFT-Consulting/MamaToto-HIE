@@ -8,16 +8,6 @@ const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
 const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
 const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
 
-const CAREPAY_DEV_BASE_URL = process.env['CAREPAY_DEV_BASE_URL'];
-const CAREPAY_DEV_CATEGORY_ID = process.env['CAREPAY_DEV_CATEGORY_ID'];
-const CAREPAY_DEV_USERNAME = process.env['CAREPAY_DEV_USERNAME'];
-const CAREPAY_DEV_PASSWORD = process.env['CAREPAY_DEV_PASSWORD'];
-const CAREPAY_DEV_POLICY_ID = process.env['CAREPAY_DEV_POLICY_ID'];
-
-
-
-
-
 const LAST_RUN_FILE = path.join(__dirname, 'last_run.txt');
 
 // Function to read the last run timestamp from the file
@@ -35,6 +25,74 @@ const readLastRunTimestamp = (): string | null => {
 const getCurrentDate = () => new Date().toISOString().slice(0, 10);
 
 
+export const getCarepayBeneficiaryById = async (idNumber: any) => {
+  try {
+    let authToken = await getCarepayAuthToken();
+    let accessToken = authToken['accessToken'];
+    let cpUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/endorsements?identificationNumber=${idNumber}`;
+    let beneficiaries = await (await fetch(cpUrl, {
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
+    })).json();
+    return beneficiaries?.[0];
+  } catch (error) {
+    return null;
+  }
+}
+
+export const postToBeneficiaryEndorsementMediator = async (beneficiary: any) => {
+  try {
+    let CAREPAY_MEDIATOR_ENDPOINT = process.env['CAREPAY_MEDIATOR_ENDPOINT'] ?? "";
+    let OPENHIM_CLIENT_ID = process.env['OPENHIM_CLIENT_ID'] ?? "";
+    let OPENHIM_CLIENT_PASSWORD = process.env['OPENHIM_CLIENT_PASSWORD'] ?? "";
+    let response = await (await fetch(CAREPAY_MEDIATOR_ENDPOINT, {
+      body: JSON.stringify(beneficiary),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": 'Basic ' + Buffer.from(OPENHIM_CLIENT_ID + ':' + OPENHIM_CLIENT_PASSWORD).toString('base64')
+      }
+    })).json();
+    return response;
+  } catch (error) {
+    return { error }
+  }
+}
+
+export const postBeneficiaryEndorsement = async (data: any, dependent: boolean = false) => {
+  try {
+    let cpLoginUrl = `${CAREPAY_BASE_URL}/usermanagement/login`;
+    let authToken = await (await (fetch(cpLoginUrl, {
+      method: "POST", body: JSON.stringify({
+        "username": CAREPAY_USERNAME,
+        "password": CAREPAY_PASSWORD
+      }),
+      headers: { "Content-Type": "application/json" }
+    }))).json();
+    // console.log(`authtoken: ${JSON.stringify(authToken)}`)
+    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${CAREPAY_POLICY_ID}/enrollments/beneficiary`
+    // console.log(cpEndpointUrl);
+    let accessToken = authToken['accessToken'];
+    let carepayBeneficiaryPayload
+    if(dependent){
+      let primaryIdNumber = data?.identifier?.[0]?.value;
+      carepayBeneficiaryPayload = await fhirPatientToCarepayDependent(data, primaryIdNumber);
+
+    }else{
+      carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data);
+    }
+    console.log(carepayBeneficiaryPayload);
+    let response = await (await (fetch(cpEndpointUrl, {
+      method: "POST",
+      body: JSON.stringify(carepayBeneficiaryPayload),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
+    }))).json();
+
+    return response;
+  } catch (error) {
+    return { error }
+  }
+}
+
 export const processIdentifiers = async (identifiers: any) => {
   try {
     let ids: any = {};
@@ -49,23 +107,10 @@ export const processIdentifiers = async (identifiers: any) => {
   }
 }
 
-function generateRandomString(length: number) {
-  let result = '';
-  const characters = '0123456789';
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-
-
-export const fhirPatientToCarepayBeneficiary = async (patient: any, mode: string = "dev") => {
+export const fhirPatientToCarepayBeneficiary = async (patient: any) => {
   try {
     let gender = String(patient.gender).toUpperCase();
     let _date = String(patient.birthDate).split("-");
-    // console.log(`${_date[0]}-${_date[2].padStart(2, '0')}-${_date[1].padStart(2, '0')}`,)
     let n: any = {};
 
     let phoneNumbers = patient.telecom ?? [];
@@ -83,7 +128,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, mode: string
       ...(patient.name[0].given[1] ? true : false) && { "middleName": patient.name[0].given[1] },
       ...(patient.name[0].family ? true : false) && { "lastName": patient.name[0].family },
       "gender": gender,
-      "dateOfBirth": patient.birthDate,
+      "dateOfBirth": patient?.birthDate,
       // "dateOfBirth":  `${_date[0]}-${_date[2].padStart(2, '0')}-${_date[1].padStart(2, '0')}`,
       "maritalStatus": maritalStatus === "M" ? "MARRIED" : "SINGLE",
       // "nationality": "KE",
@@ -124,6 +169,34 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, mode: string
       //   ],
       //   "signatureDate": getCurrentDate()
       // }
+    }
+  }
+  catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string) => {
+  try {
+    let gender = String(patient.gender).toUpperCase();
+    let _date = String(patient.birthDate).split("-");
+    let n: any = {};
+    return {
+      // "title": gender == "MALE" ? "MR" : "MRS",
+      "firstName": patient.name[0].given[0] ?? "",
+      ...(patient.name[0].given[1] ? true : false) && { "middleName": patient.name[0].given[1] },
+      ...(patient.name[0].family ? true : false) && { "lastName": patient.name[0].family },
+      "gender": gender,
+      "dateOfBirth": patient?.birthDate,
+      "residentialCountryCode": "string",
+      "categoryId": `${CAREPAY_CATEGORY_ID}`,
+      "policyId": `${CAREPAY_POLICY_ID}`,
+      "relationship": "CHILD",
+      "familyIdentifier":primaryIdNumber,
+      // "dateOfEnrollment": "2014-02-07",
+      "startDate": new Date().toISOString(),
+      policyholderId: "policyholderId"
     }
   }
   catch (error) {
@@ -230,7 +303,7 @@ export const fetchApprovedEndorsements = async () => {
             data: JSON.stringify({ ...patientResource })
           })).data;
           console.log(`...updated Patient/${updated.id} with ${i.membershipNumber} -> ${i.id}`);
-        }else{
+        } else {
           console.log(`...skipping ${i.membershipNumber} with ref already`);
         }
       }

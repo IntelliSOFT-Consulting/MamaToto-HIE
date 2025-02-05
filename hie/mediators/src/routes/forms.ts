@@ -1,0 +1,54 @@
+import express from "express";
+import { FhirApi, OperationOutcome } from "../lib/utils";
+import { childFormToFhirBundle } from "../lib/heyforms-child";
+import e from "express";
+import { momFormToFhirBundle } from "../lib/heyforms-mom";
+
+const router = express.Router();
+
+router.post("/mom", async (req, res) => {
+  try {
+    const payload = req.body;
+    if (!payload || !payload.answers) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
+
+    /* Convert payload to FHIR Bundle */
+    const bundle = momFormToFhirBundle(payload);
+
+    /* Post Bundle to SHR */
+    let shrResponse = await (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle),})).data;
+    res.json(shrResponse);
+    return;
+  } catch (error) {
+    return res.status(500).json(OperationOutcome(String(error)));
+  }
+});
+
+
+router.post("/child", async (req, res) => {
+    try {
+      const payload = req.body;
+      if (!payload || !payload.answers) {
+        return res.status(400).json({ error: "Invalid payload" });
+      }
+  
+      /* Convert payload to FHIR Bundle */
+      const bundle = childFormToFhirBundle(payload);
+      if (!bundle){
+        return res.status(400).json(OperationOutcome("Invalid payload: Failed to convert"));
+      }
+  
+      /* Post Bundle to SHR */
+      let shrResponse = await (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle),})).data;
+      res.json(shrResponse);
+      return;
+    } catch (error) {
+      res.status(500).json({
+        error: 'Error transforming data to FHIR format',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+export default router;

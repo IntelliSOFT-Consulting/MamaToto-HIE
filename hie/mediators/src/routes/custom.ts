@@ -1,5 +1,5 @@
 import express from "express";
-import { FhirApi, redirectToDev, sendTurnNotification } from "../lib/utils";
+import { FhirApi, OperationOutcome, redirectToDev, sendTurnNotification } from "../lib/utils";
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
 const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
@@ -113,88 +113,34 @@ router.post("/Patient", async (req, res) => {
   try {
     let data = req.body;
     if (data.resourceType !== "Patient") {
-      res.statusCode = 400;
-      res.json({
-        resourceType: "OperationOutcome",
-        id: "exception",
-        issue: [
-          {
-            severity: "error",
-            code: "exception",
-            details: {
-              text: `Invalid Patient Resource`,
-            },
-          },
-        ],
-      });
-      return;
+      return res.status(400).json(OperationOutcome(`${JSON.stringify(`Invalid Patient resource`)}`));
     }
     // support [test phone number -> dev]
     if ( TEST_PHONE_NUMBERS.indexOf(`${data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value}`) > -1) {
-      console.log("...redirecting");
+      console.log(":-> Redirecting to dev");
       try {
         let response = await redirectToDev("/fhir/Patient", data);
         console.log(JSON.stringify(response));
         if (response.resourceType == "OperationOutcome") {
-          res.statusCode = 400;
-          res.json(response);
-          return;
+          return res.status(400).json(response);
         }
-        res.statusCode = 201;
-        res.json(response);
-        return;
+        return res.status(201).json(response);
       } catch (error) {
-        res.statusCode = 400;
-        res.json({
-          resourceType: "OperationOutcome",
-          id: "exception",
-          issue: [
-            {
-              severity: "error",
-              code: "exception",
-              details: {
-                text: `${JSON.stringify(error)}`,
-              },
-            },
-          ],
-        });
-        return;
+        return res.status(400).json(OperationOutcome(`${JSON.stringify(error)}`));
       }
     }
 
     // default & production [save to SHR]
-    let shrResponse = await (
-      await FhirApi({
-        url: "/Patient",
-        method: "POST",
-        data: JSON.stringify(data),
-      })
-    ).data;
+    let shrResponse = await ( await FhirApi({ url: "/Patient", method: "POST", data: JSON.stringify(data),})).data;
     if (shrResponse.resourceType === "OperationOutcome") {
-      res.statusCode = 400;
-      res.json(shrResponse);
-      return;
+      return res.status(400).json(shrResponse);
     }
     res.statusCode = 200;
     res.json(shrResponse);
     return;
   } catch (error) {
-    console.error(error);
-    res.statusCode = 400;
-    res.json({
-      resourceType: "OperationOutcome",
-      id: "exception",
-      issue: [
-        {
-          severity: "error",
-          code: "exception",
-          details: {
-            text: `${JSON.stringify(error)}`,
-          },
-        },
-      ],
-    });
-    return;
+    console.log(error);
+    return res.status(400).json(OperationOutcome(`${JSON.stringify(error)}`));
   }
 });
 

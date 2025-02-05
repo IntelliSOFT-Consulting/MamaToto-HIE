@@ -2,17 +2,11 @@ import express from 'express';
 import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
-import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
-import { processJsonData, transformToFhir } from '../lib/heyforms';
+import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/carepay';
+import { processJsonData } from '../lib/heyforms-mom';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
-const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
-
-const CAREPAY_BASE_URL = process.env['CAREPAY_BASE_URL'];
-const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
-const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
-const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
 
 
 // PHONE_NUMBER_FILTERING
@@ -21,7 +15,7 @@ export const router = express.Router();
 
 router.use(express.json());
 
-//process FHIR Beneficiary
+/* process FHIR Bundle */
 router.post('/', async (req, res) => {
   try {
     let data = req.body;
@@ -32,39 +26,37 @@ router.post('/', async (req, res) => {
       return;
     }
     let patient = null;
-    for(let entry of data.entry){
-        // existing patient
-        if(entry?.resource?.resourceType === "Patient" && entry?.request?.method === "PUT"){
-            patient = entry?.resource?.id;
-            break;
+    for (let entry of data.entry) {
+      // existing patient
+      if (entry?.resource?.resourceType === "Patient" && entry?.request?.method === "PUT") {
+        patient = entry?.resource?.id;
+        break;
+      }
+      // create a new patient
+      if (entry?.resource?.resourceType === "Patient" && entry?.request?.method === "POST") {
+        patient = entry?.resource?.id;
+        let fhirPatient = entry?.resource;
+        for (let id of fhirPatient.identifiers) {
+          // if()
         }
-        // create a new patient
-        if (entry?.resource?.resourceType === "Patient" && entry?.request?.method === "POST"){
-            patient = entry?.resource?.id;
-            let fhirPatient = entry?.resource;
-            for (let id of fhirPatient.identifiers){
-                // if()
-            }
-        }
+      }
     }
-    if(!patient){
-        res.statusCode = 400;
-        res.json(OperationOutcome(`Bundle must contain a Patient Resource`));
-        return;
+    if (!patient) {
+      res.statusCode = 400;
+      res.json(OperationOutcome(`Bundle must contain a Patient Resource`));
+      return;
     }
     // check if patient exists
-    let fhirPatient = (await FhirApi({url:  `/Patient/${patient}`})).data;
-    if(fhirPatient.resourceType === "Patient"){
-        res.statusCode = 400;
-        res.json(OperationOutcome("Invalid FHIR Resource provided. Expects a FHIR transaction Bundle"));
-        return;
+    let fhirPatient = (await FhirApi({ url: `/Patient/${patient}` })).data;
+    if (fhirPatient.resourceType === "Patient") {
+      return res.status(400).json(OperationOutcome("Invalid FHIR Resource provided. Expects a FHIR transaction Bundle"));
     }
 
 
     // post to FHIR Server
 
     return;
-  }catch (error){
+  } catch (error) {
 
   }
 });
@@ -138,30 +130,5 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
   }
 });
 
-
-router.post('/webform', async (req, res) => {
-  try {
-    const processedData = processJsonData(req.body);
-    const bundle = transformToFhir(processedData);
-
-    let shrResponse = await (
-      await FhirApi({
-        url: "/",
-        method: "POST",
-        data: JSON.stringify(bundle),
-      })
-    ).data;
-    // console.log(bundle);
-    res.json(shrResponse);
-    return;
-  } catch (error) {
-    console.error('Error transforming to FHIR:', error);
-    res.status(500).json({
-      error: 'Error transforming data to FHIR format',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-    return;
-  }
-});
 
 export default router;
