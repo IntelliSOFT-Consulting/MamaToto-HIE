@@ -1,15 +1,15 @@
 {
-    "urn": "urn:webform-beneficiary:ips",
+    "urn": "urn:custom-utils:whatsapp",
     "version": "1.0.0",
-    "name": "WebForm Beneficiary Mediator",
-    "description": "This mediator is responsible for processing the Heyforms Beneficiary Payload.",
+    "name": "Custom Utils Mediator",
+    "description": "This mediator is responsible for Custom Utils.",
     "defaultChannelConfig": [
         {
-            "name": "WebForm Beneficiary Channel",
-            "urlPattern": "^/forms/.*$",
+            "name": "Custom Utils",
+            "urlPattern": "^/utils/.*$",
             "routes": [
                 {
-                    "name": "WebForm Beneficiary Route",
+                    "name": "Custom Utils",
                     "host": "mediators",
                     "pathTransform": "s/\/\/.*$/",
                     "port": "3000",
@@ -23,16 +23,16 @@
                 "*"
             ],
             "methods": [
-                "POST"
+                "GET", "POST"
             ],
             "type": "http"
         }
     ],
     "endpoints": [
         {
-            "name": "Webform Beneficiary Endpoint",
+            "name": "Custom Utils",
             "host": "mediators",
-            "path": "/forms",
+            "path": "/utils",
             "port": "3000",
             "primary": true,
             "type": "http",

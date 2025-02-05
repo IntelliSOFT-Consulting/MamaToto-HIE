@@ -2,7 +2,7 @@ import express from "express";
 import cors from 'cors'
 import * as dotenv from 'dotenv'
 import cron from 'node-cron';
-import { setupSwagger } from "./swagger";
+// import { setupSwagger } from "./swagger";
 
 dotenv.config() // Load environment variables
 
@@ -17,6 +17,7 @@ import Visit from './routes/visit';
 import Callback from './routes/callback';
 import Custom from './routes/custom';
 import WebFormEnrollment from './routes/forms';
+import Utils from './routes/tempUtils';
 
 import { fetchApprovedEndorsements, fetchVisits } from "./lib/carepay";
 
@@ -26,7 +27,7 @@ const PORT = 3000;
 
 app.use(cors())
 
-setupSwagger(app);
+// setupSwagger(app);
 
 app.use((req, res, next) => {
   try {
@@ -46,6 +47,8 @@ app.use('/forms', WebFormEnrollment)
 app.use('/visit', Visit)
 app.use('/callback', Callback)
 app.use('/custom', Custom)
+app.use('/utils', Utils)
+
 
 
 
@@ -57,6 +60,6 @@ app.listen(PORT, () => {
 cron.schedule(`*/${CRON_INTERVAL} * * * *`, () => {
   console.log(`Cron job running every ${CRON_INTERVAL} minutes`);
   fetchVisits();
-  fetchApprovedEndorsements()
+  fetchApprovedEndorsements();
 });
 

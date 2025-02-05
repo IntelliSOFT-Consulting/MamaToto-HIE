@@ -339,7 +339,7 @@ router.post("/", async (req, res) => {
 // add a UI to input phone number
 router.delete("/Patient/:id", async (req, res) => {
   let data = req.body;
-  let { phoneNumber } = req.params;
+  // let { phoneNumber } = req.params;
   try {
     let response = await redirectToDev("/fhir/Patient", data);
     console.log(JSON.stringify(response));
