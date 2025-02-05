@@ -287,6 +287,7 @@ export let createQuestionnaireResponseSubscription = async () => {
 // createFHIRPatientSubscription();
 createEncounterSubscription();
 createQuestionnaireResponseSubscription();
+createFHIRPatientSubscription();
 createClient(process.env['OPENHIM_CLIENT_ID'] || '', process.env['OPENHIM_CLIENT_PASSWORD'] || '');
 
 

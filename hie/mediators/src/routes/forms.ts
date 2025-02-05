@@ -6,15 +6,22 @@ import { momFormToFhirBundle } from "../lib/heyforms-mom";
 
 const router = express.Router();
 
+router.use(
+  express.json({
+    type: ["application/json", "application/fhir+json"],
+  })
+);
+
 router.post("/mom", async (req, res) => {
   try {
     const payload = req.body;
     if (!payload || !payload.answers) {
-      return res.status(400).json({ error: "Invalid payload" });
+      return res.status(400).json({ error: "Invalid payload submitted" });
     }
 
     /* Convert payload to FHIR Bundle */
     const bundle = momFormToFhirBundle(payload);
+    console.log(bundle);
 
     /* Post Bundle to SHR */
     let shrResponse = await (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle),})).data;
@@ -35,6 +42,7 @@ router.post("/child", async (req, res) => {
   
       /* Convert payload to FHIR Bundle */
       const bundle = childFormToFhirBundle(payload);
+      console.log(bundle);
       if (!bundle){
         return res.status(400).json(OperationOutcome("Invalid payload: Failed to convert"));
       }

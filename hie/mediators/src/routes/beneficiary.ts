@@ -267,9 +267,12 @@ router.post('/carepay', async (req, res) => {
     if (data.resourceType != "Patient") {
       return res.status(400).json(OperationOutcome(`Invalid Patient resource`));
     }
-    
-    // console.log(`Res: ${JSON.stringify(carepayResponse)}`)
-    const carepayResponse = await postBeneficiaryEndorsement(data);
+
+    let isDependant = false;
+    if (data?.identifier?.[0]?.type?.coding?.[0]?.display === "Mother's ID Number"){
+      isDependant=true
+    }
+    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
     if (carepayResponse.status === 400) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
       sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
@@ -289,7 +292,8 @@ router.post('/carepay', async (req, res) => {
   } catch (error) {
     console.error(error);
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
-    return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(error)}`));  }
+    return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(error)}`));
+  }
 });
 
 
@@ -307,20 +311,22 @@ router.put('/notifications/Patient/:id', async (req, res) => {
 
     /* If these ids have already been assigned, don't register to Carepay */
     if (tag || IDENTIFIERS.some(id => id in parsedIds)) {
-      res.statusCode = 200;
-      res.json(data);
-      return;
+      return res.status(200).json(data);
     }
 
     /* Post patient to Carepay */
-    const response = await postToBeneficiaryEndorsementMediator(data);
-    if (response.code >= 400) {
-      sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
-      return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
+    if (data?.identifier?.[0]?.type?.coding?.[0]?.code === "NATIONAL_ID") {
+      const response = await postToBeneficiaryEndorsementMediator(data);
+      console.log(JSON.stringify(response));
+      if (response.code >= 400) {
+        sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
+        return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
+      }
+      res.statusCode = 200;
+      res.json(response);
+      return;
     }
-    res.statusCode = 200;
-    res.json(response);
-    return;
+    return res.status(200).json(data);
   } catch (error) {
     console.log(error);
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);

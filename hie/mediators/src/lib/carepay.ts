@@ -179,6 +179,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any) => {
 
 export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string) => {
   try {
+ 
     let gender = String(patient.gender).toUpperCase();
     let _date = String(patient.birthDate).split("-");
     let n: any = {};
@@ -194,9 +195,10 @@ export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumbe
       "policyId": `${CAREPAY_POLICY_ID}`,
       "relationship": "CHILD",
       "familyIdentifier":primaryIdNumber,
+      maritalStatus:"SINGLE",
       // "dateOfEnrollment": "2014-02-07",
       "startDate": new Date().toISOString(),
-      policyholderId: "policyholderId"
+      policyholderId: primaryIdNumber
     }
   }
   catch (error) {

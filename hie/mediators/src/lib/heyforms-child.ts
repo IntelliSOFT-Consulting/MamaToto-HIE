@@ -20,13 +20,13 @@ export const childFormToFhirBundle = (payload: any) => {
         // Extract gender safely
         const genderAnswer = answers["ZRNqwtLAyAlr"]?.value?.value;
         const gender = genderAnswer && genderAnswer.length > 0 ?
-            (genderAnswer[0] === "PfiESRthYg2f" ? "male" : "female") : undefined;
+            (genderAnswer[0] === "PfiESRthYg2f" ? "male" : "female") : "female";
 
         // FHIR Patient Resource for the child
         const patient = {
             resourceType: "Patient",
             id: uuidv4(),
-            identifier: [FhirIdentifier("http://example.org/national-id", "NI", "Mother's ID Number",answers["NI57snEmn4bR"].toString() )],
+            identifier: [FhirIdentifier("http://example.org/national-id", "NATIONAL_ID", "Mother's ID Number",answers["NI57snEmn4bR"].toString() )],
             name: [{
                 given: [answers["1WLpdlhdUoOi"]?.firstName || "Unknown"],
                 family: answers["1WLpdlhdUoOi"]?.lastName || "Unknown"
