@@ -6,12 +6,12 @@
     "defaultChannelConfig": [
         {
             "name": "WebForm Beneficiary Channel",
-            "urlPattern": "/beneficiary/webform",
+            "urlPattern": "^/forms/.*$",
             "routes": [
                 {
                     "name": "WebForm Beneficiary Route",
                     "host": "mediators",
-                    "path": "/beneficiary/webform",
+                    "pathTransform": "s/\/\/.*$/",
                     "port": "3000",
                     "primary": true,
                     "type": "http",
@@ -32,7 +32,7 @@
         {
             "name": "Webform Beneficiary Endpoint",
             "host": "mediators",
-            "path": "/beneficiary/webform",
+            "path": "/forms",
             "port": "3000",
             "primary": true,
             "type": "http",

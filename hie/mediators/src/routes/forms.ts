@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(
   express.json({
-    type: ["application/json", "application/fhir+json"],
+    type: ["application/json"],
   })
 );
 
@@ -28,7 +28,7 @@ router.post("/mom", async (req, res) => {
     res.json(shrResponse);
     return;
   } catch (error) {
-    return res.status(500).json(OperationOutcome(String(error)));
+    return res.status(400).json(OperationOutcome(String(error)));
   }
 });
 
