@@ -273,7 +273,7 @@ router.post('/carepay', async (req, res) => {
       isDependant=true
     }
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
-    if (carepayResponse.status === 400) {
+    if (carepayResponse.status === 400 || Object.keys(carepayResponse).indexOf('error') > -1) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
       sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
       return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`));
@@ -319,7 +319,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
       console.log(JSON.stringify(response));
       if (response.code >= 400) {
         sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
-        return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
+        return res.status(200).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
       }
       res.statusCode = 200;
       res.json(response);
@@ -347,6 +347,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
 
 
     const IDENTIFIERS = String(process.env.IDENTIFIERS).split(",");
+    IDENTIFIERS.push("NATIONAL_ID")
 
     /* If these ids have already been assigned, don't register to Carepay */
     if (tag || IDENTIFIERS.some(id => id in parsedIds)) {
