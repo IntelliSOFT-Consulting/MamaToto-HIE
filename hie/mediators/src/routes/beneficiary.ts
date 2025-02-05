@@ -1,9 +1,9 @@
 import express from 'express';
-import { FhirApi, sendSlackAlert, sendTurnNotification } from '../lib/utils';
+import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
-import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/payloadMapping';
-import { processJsonData, transformToFhir } from '../lib/heyforms';
+import { postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
+import { FhirIdentifier } from '../lib/fhir';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
@@ -15,7 +15,6 @@ const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
 const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
 
 
-// PHONE_NUMBER_FILTERING
 
 export const router = express.Router();
 
@@ -261,78 +260,26 @@ router.post('/', async (req, res) => {
 });
 
 
-//process FHIR Beneficiary
+/* Post patient to Carepay - Channel */
 router.post('/carepay', async (req, res) => {
   try {
     let data = req.body;
-    // console.log("CarePay Request Payload", data);
     if (data.resourceType != "Patient") {
-      res.statusCode = 200;
-      res.json({
-        "resourceType": "OperationOutcome",
-        "id": "exception",
-        "issue": [{
-          "severity": "error",
-          "code": "exception",
-          "details": {
-            "text": `Invalid Patient Resource`
-          }
-        }]
-      });
-      return;
+      return res.status(400).json(OperationOutcome(`Invalid Patient resource`));
     }
 
-    let mode = "prod"
-    // send payload to carepay
-
-    // support [test phone number -> dev]
-    if (TEST_PHONE_NUMBERS.indexOf(`${data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value}`) > -1) {
-      // dev environment
-      mode = "dev"
+    let isDependant = false;
+    if (data?.identifier?.[0]?.type?.coding?.[0]?.display === "Mother's ID Number"){
+      isDependant=true
     }
-    let cpLoginUrl = `${CAREPAY_BASE_URL}/usermanagement/login`;
-    let authToken = await (await (fetch(cpLoginUrl, {
-      method: "POST", body: JSON.stringify({
-        "username": CAREPAY_USERNAME,
-        "password": CAREPAY_PASSWORD
-      }),
-      headers: { "Content-Type": "application/json" }
-    }))).json();
-    // console.log(`authtoken: ${JSON.stringify(authToken)}`)
-    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${CAREPAY_POLICY_ID}/enrollments/beneficiary`
-    // console.log(cpEndpointUrl);
-    let accessToken = authToken['accessToken'];
-    let carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, mode);
-    console.log(carepayBeneficiaryPayload);
-    let carepayResponse = await (await (fetch(cpEndpointUrl, {
-      method: "POST",
-      body: JSON.stringify(carepayBeneficiaryPayload),
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
-    }))).json();
-
-    console.log(`Res: ${JSON.stringify(carepayResponse)}`)
-
+    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
     if (carepayResponse.status === 400) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
-      res.statusCode = 400;
-      res.json({
-        "resourceType": "OperationOutcome",
-        "id": "exception",
-        "issue": [{
-          "severity": "error",
-          "code": "exception",
-          "details": {
-            "text": `Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`
-          }
-        }]
-      });
       sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
-      return;
+      return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`));
     }
     res.statusCode = 200;
-    // data['identifier'] = [];
-    console.log(carepayResponse);
-    let carepayFhirId = { type: { coding: [{ system: "http://carepay.com", code: "CAREPAY-MEMBER-NUMBER", display: "Carepay Member Number" }] }, value: carepayResponse.membershipNumber }
+    let carepayFhirId = FhirIdentifier("http://carepay.com", "CAREPAY-MEMBER-NUMBER", "Carepay Member Number", carepayResponse.membershipNumber);
     if (!data.identifier) {
       data.identifier = [carepayFhirId];
     } else {
@@ -340,29 +287,16 @@ router.post('/carepay', async (req, res) => {
     }
     data = await (await (FhirApi({ url: `/Patient/${data.id}`, method: "PUT", data: JSON.stringify(data) }))).data
     sendTurnNotification(data, "ENROLMENT_CONFIRMATION");
-    res.json(data);
-    return;
+    return res.status(201).json(data);
   } catch (error) {
-    console.error(error);
-    res.statusCode = 400;
-    res.json({
-      "resourceType": "OperationOutcome",
-      "id": "exception",
-      "issue": [{
-        "severity": "error",
-        "code": "exception",
-        "details": {
-          "text": `Failed to post beneficiary- ${JSON.stringify(error)}`
-        }
-      }]
-    });
+    console.log(error);
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
-    return;
+    return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(error)}`));
   }
 });
 
 
-//process FHIR beneficiary
+/* process patient from subscription */
 router.put('/notifications/Patient/:id', async (req, res) => {
   try {
     let { id } = req.params;
@@ -372,62 +306,34 @@ router.put('/notifications/Patient/:id', async (req, res) => {
     let parsedIds = await processIdentifiers(identifiers);
     // console.log(parsedIds);
 
-    // if these ids have already been assigned...
-    if (tag || Object.keys(parsedIds).indexOf('CAREPAY-MEMBER-NUMBER') > -1 || Object.keys(parsedIds).indexOf('CAREPAY-PATIENT-REF') > -1) {
-      res.statusCode = 200;
-      res.json(data);
-      return;
+    const IDENTIFIERS = String(process.env.IDENTIFIERS).split(",");
+
+    /* If these ids have already been assigned, don't register to Carepay */
+    if (tag || IDENTIFIERS.some(id => id in parsedIds)) {
+      return res.status(200).json(data);
     }
-    let CAREPAY_MEDIATOR_ENDPOINT = process.env['CAREPAY_MEDIATOR_ENDPOINT'] ?? "";
-    let OPENHIM_CLIENT_ID = process.env['OPENHIM_CLIENT_ID'] ?? "";
-    let OPENHIM_CLIENT_PASSWORD = process.env['OPENHIM_CLIENT_PASSWORD'] ?? "";
-    let response = await (await fetch(CAREPAY_MEDIATOR_ENDPOINT, {
-      body: JSON.stringify(data),
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": 'Basic ' + Buffer.from(OPENHIM_CLIENT_ID + ':' + OPENHIM_CLIENT_PASSWORD).toString('base64')
+
+    /* Post patient to Carepay */
+    if (data?.identifier?.[0]?.type?.coding?.[0]?.code === "NATIONAL_ID") {
+      const response = await postToBeneficiaryEndorsementMediator(data);
+      console.log(JSON.stringify(response));
+      if (response.code >= 400) {
+        sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
+        return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
       }
-    })).json();
-    if (response.code >= 400) {
-      res.statusCode = response.code;
-      res.json({
-        "resourceType": "OperationOutcome",
-        "id": "exception",
-        "issue": [{
-          "severity": "error",
-          "code": "exception",
-          "details": {
-            "text": `Failed to post beneficiary- ${JSON.stringify(response)}`
-          }
-        }]
-      });
-      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`)
+      res.statusCode = 200;
+      res.json(response);
       return;
     }
-    res.statusCode = 200;
-    res.json(response);
-    return;
+    return res.status(200).json(data);
   } catch (error) {
-    console.error(error);
-    res.statusCode = 400;
-    res.json({
-      "resourceType": "OperationOutcome",
-      "id": "exception",
-      "issue": [{
-        "severity": "error",
-        "code": "exception",
-        "details": {
-          "text": `Failed to post beneficiary- ${JSON.stringify(error)}`
-        }
-      }]
-    });
-    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`)
-    return;
+    console.log(error);
+    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
+    return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(error)}`));
   }
 });
 
-// process questionnaire response
+/* process questionnaire response from subscription */
 router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
   try {
     let { id } = req.params;
@@ -439,84 +345,29 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
     let parsedIds = await processIdentifiers(identifiers);
     // console.log(parsedIds);
 
-    // if these ids have already been assigned...
-    if (tag || Object.keys(parsedIds).indexOf('CAREPAY-MEMBER-NUMBER') > -1 || Object.keys(parsedIds).indexOf('CAREPAY-PATIENT-REF') > -1) {
+
+    const IDENTIFIERS = String(process.env.IDENTIFIERS).split(",");
+
+    /* If these ids have already been assigned, don't register to Carepay */
+    if (tag || IDENTIFIERS.some(id => id in parsedIds)) {
       res.statusCode = 200;
       res.json(data);
       return;
     }
-    let CAREPAY_MEDIATOR_ENDPOINT = process.env['CAREPAY_MEDIATOR_ENDPOINT'] ?? "";
-    let OPENHIM_CLIENT_ID = process.env['OPENHIM_CLIENT_ID'] ?? "";
-    let OPENHIM_CLIENT_PASSWORD = process.env['OPENHIM_CLIENT_PASSWORD'] ?? "";
-    let response = await (await fetch(CAREPAY_MEDIATOR_ENDPOINT, {
-      body: JSON.stringify(data),
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": 'Basic ' + Buffer.from(OPENHIM_CLIENT_ID + ':' + OPENHIM_CLIENT_PASSWORD).toString('base64')
-      }
-    })).json();
+
+    /* Post patient to Carepay */
+    const response = await postToBeneficiaryEndorsementMediator(data);
     if (response.code >= 400) {
-      res.statusCode = response.code;
-      res.json({
-        "resourceType": "OperationOutcome",
-        "id": "exception",
-        "issue": [{
-          "severity": "error",
-          "code": "exception",
-          "details": {
-            "text": `Failed to post beneficiary- ${JSON.stringify(response)}`
-          }
-        }]
-      });
-      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(response)}`);
-      return;
+      sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
+      return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
     }
     res.statusCode = 200;
     res.json(response);
     return;
   } catch (error) {
-    console.error(error);
-    res.statusCode = 400;
-    res.json({
-      "resourceType": "OperationOutcome",
-      "id": "exception",
-      "issue": [{
-        "severity": "error",
-        "code": "exception",
-        "details": {
-          "text": `Failed to post beneficiary- ${JSON.stringify(error)}`
-        }
-      }]
-    });
+    // console.log(error);
     sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
-    return;
-  }
-});
-
-
-router.post('/webform', async (req, res) => {
-  try {
-    const processedData = processJsonData(req.body);
-    const bundle = transformToFhir(processedData);
-
-    let shrResponse = await (
-      await FhirApi({
-        url: "/",
-        method: "POST",
-        data: JSON.stringify(bundle),
-      })
-    ).data;
-    // console.log(bundle);
-    res.json(shrResponse);
-    return;
-  } catch (error) {
-    console.error('Error transforming to FHIR:', error);
-    res.status(500).json({
-      error: 'Error transforming data to FHIR format',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-    return;
+    return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(error)}`));
   }
 });
 

@@ -4,9 +4,6 @@ import { FhirApi } from "./utils";
 
 const IG_FHIR_SERVER = process.env.IG_FHIR_SERVER;
 
-// 1. Validate Patients
-// 2. Validate
-
 export async function validateResourceProfile(
   resource: any,
   profileId: string

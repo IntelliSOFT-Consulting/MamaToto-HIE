@@ -1,5 +1,5 @@
 import express from 'express';
-import { fetchApprovedEndorsements, fetchVisits } from '../lib/payloadMapping';
+import { fetchApprovedEndorsements, fetchVisits } from '../lib/carepay';
 
 export const router = express.Router();
 
