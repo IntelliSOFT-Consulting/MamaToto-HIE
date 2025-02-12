@@ -34,7 +34,7 @@ router.post('/carepay', async (req, res) => {
       isDependant=true
     }
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
-    if (carepayResponse.status === 400 || Object.keys(carepayResponse).indexOf('error') > -1) {
+    if (JSON.stringify(carepayResponse).includes('error')) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
       sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
       return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`));
