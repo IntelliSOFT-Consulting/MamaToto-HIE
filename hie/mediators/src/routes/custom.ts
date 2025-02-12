@@ -144,6 +144,7 @@ router.post("/Patient", async (req, res) => {
 router.post("/QuestionnaireResponse", async (req, res) => {
   try {
     let data = req.body;
+    data = JSON.parse(JSON.stringify(data).replace('valuecoding', 'valueCoding').replace('valuedate', 'valueDate').replace('valuestring', 'valueString'));
     if (data.resourceType !== "QuestionnaireResponse") {
       res.statusCode = 400;
       res.json({
