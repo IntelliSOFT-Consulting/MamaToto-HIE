@@ -1,6 +1,6 @@
 import os
 
-from scripts.rebuild import replay_failed_questionnaire_responses
+from rebuild import replay_failed_questionnaire_responses
 
 ENV = os.getenv("ENV", "DEV")
 
