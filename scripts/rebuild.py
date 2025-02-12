@@ -38,10 +38,10 @@ def fetch_openhim_transactions():
     res = []
     # Print the documents
     for doc in documents:
-        # print(doc['request'])
         request = doc['request']
-        response = doc['response']
-        res.append({"request": request, "response": response})
+        # print(request)
+        # response = doc.get('response', doc.get('error'))
+        res.append({"request": request})
         
     return res
 
@@ -52,7 +52,8 @@ def get_qr_transactions():
     for t in tx:
         if t['request']:
             _path = (t['request']['path'])
-            if _path == '/custom/QuestionnaireResponse' or _path == '/custom/QuestionnaireResponse':
+            print(_path)
+            if _path == '/custom/QuestionnaireResponse' or _path == '/fhir/QuestionnaireResponse':
                 res.append(t)
     
     return res
@@ -80,7 +81,20 @@ def post_to_iol(path, data, mode="DEV"):
 
 def put_to_shr(resource_type, data, mode="DEV"):
     try:
+        data['id'] = data['subject']['reference'].replace('/', '-')
+        data = json.loads(json.dumps(data).replace('valuecoding', 'valueCoding').replace('valuedate', 'valueDate').replace('valuestring', 'valueString'))
         response = requests.put("{}/fhir/{}/{}".format(PROD_IOL_URL if mode == "PROD" else DEV_IOL_URL, resource_type, data['id']), json=data,
+                    auth=(PROD_IOL_USERNAME if mode == "PROD" else DEV_IOL_USERNAME, 
+                          PROD_IOL_PASSWORD if mode == "PROD" else DEV_IOL_PASSWORD))
+        print(response.json())
+    except Exception as e:
+        print(str(e))
+        return None
+    
+def post_to_shr(resource_type, data, mode="DEV"):
+    try:
+        data['id'] = data['subject']['reference'].replace('/', '-')
+        response = requests.post("{}/fhir/{}/{}".format(PROD_IOL_URL if mode == "PROD" else DEV_IOL_URL, resource_type, data['id']), json=data,
                     auth=(PROD_IOL_USERNAME if mode == "PROD" else DEV_IOL_USERNAME, 
                           PROD_IOL_PASSWORD if mode == "PROD" else DEV_IOL_PASSWORD))
         print(response)
@@ -94,5 +108,9 @@ def replay_failed_questionnaire_responses(mode):
     for qr in failed_qrs:
         # print(qr['request']['body'])
         data = qr['request']['body']
-        put_to_shr("QuestionnaireResponse", json.loads(data), mode)
+        print(data)
+        try:
+            put_to_shr("QuestionnaireResponse", json.loads(data), mode)
+        except Exception as e:
+            print(e)
     pass
