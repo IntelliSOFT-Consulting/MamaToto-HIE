@@ -1,5 +1,6 @@
 import express from "express";
 import { FhirApi, OperationOutcome, redirectToDev, sendTurnNotification } from "../lib/utils";
+import { FhirIdentifier } from "../lib/fhir";
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
 const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
@@ -112,6 +113,7 @@ router.post("/Patient", async (req, res) => {
     if (data.resourceType !== "Patient") {
       return res.status(400).json(OperationOutcome(`${JSON.stringify(`Invalid Patient resource`)}`));
     }
+    data?.identifier.push(FhirIdentifier("https://mamatoto.pharmaccess.io", "WHATSAPP_ENROLLMENT_ID", "Whatsapp Enrollment ID", (data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value)));
     // support [test phone number -> dev]
     if ( TEST_PHONE_NUMBERS.indexOf(`${data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value}`) > -1) {
       console.log(":-> Redirecting to dev");

@@ -369,7 +369,7 @@ export let sendSlackAlert = async (message: any) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(
-                {text: `⚠️🚨 IOL error:  -> ${message}`}
+                {text: `⚠️🚨 IOL mediator error: ${message}`}
             )
         })).json();
         return response;
