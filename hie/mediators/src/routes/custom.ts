@@ -14,9 +14,6 @@ router.use(
   })
 );
 
-router.post("/:ShrResource", async (req, res) => {});
-//process FHIR Beneficiary
-
 
 /**
  * @openapi
