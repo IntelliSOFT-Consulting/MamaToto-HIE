@@ -36,8 +36,8 @@ router.post('/carepay', async (req, res) => {
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
     if (JSON.stringify(carepayResponse).includes('error')) {
       sendTurnNotification(data, "ENROLMENT_REJECTION");
-      sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`);
-      return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(carepayResponse)}`));
+      sendSlackAlert(`Failed to register beneficiary to payer - ${JSON.stringify(carepayResponse)}`);
+      return res.status(400).json(OperationOutcome(`Failed to register beneficiary to payer - ${JSON.stringify(carepayResponse)}`));
     }
     res.statusCode = 200;
     let carepayFhirId = FhirIdentifier("http://carepay.com", "CAREPAY-MEMBER-NUMBER", "Carepay Member Number", carepayResponse.membershipNumber);
@@ -55,7 +55,7 @@ router.post('/carepay', async (req, res) => {
   } catch (error) {
     console.log(error);
     sendSlackAlert(`Failed to register beneficiary to payer - ${JSON.stringify(error)}`);
-    return res.status(400).json(OperationOutcome(`Failed to post beneficiary - ${JSON.stringify(error)}`));
+    return res.status(400).json(OperationOutcome(`Failed to register beneficiary to payer - ${JSON.stringify(error)}`));
   }
 });
 
@@ -83,7 +83,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
       console.log(JSON.stringify(response));
       if (JSON.stringify(response).includes('error')) {
         sendSlackAlert(`Failed to register beneficiary to payer - ${JSON.stringify(response)}`);
-        return res.status(200).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(response)}`));
+        return res.status(200).json(OperationOutcome(`Failed to register beneficiary to payer- ${JSON.stringify(response)}`));
       }
       res.statusCode = 200;
       res.json(response);
@@ -92,8 +92,8 @@ router.put('/notifications/Patient/:id', async (req, res) => {
     return res.status(200).json(data);
   } catch (error) {
     console.log(error);
-    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
-    return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(error)}`));
+    sendSlackAlert(`Failed to register beneficiary to payer - ${JSON.stringify(error)}`);
+    return res.status(400).json(OperationOutcome(`Failed to register beneficiary to payer- ${JSON.stringify(error)}`));
   }
 });
 
@@ -123,16 +123,16 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
     /* Post patient to Carepay */
     const response = await postToBeneficiaryEndorsementMediator(data);
     if (JSON.stringify(response).includes('error')) {
-      sendSlackAlert(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`);
-      return res.status(400).json(OperationOutcome(`Failed to post beneficiary to Carepay - ${JSON.stringify(response)}`));
+      sendSlackAlert(`Failed to register beneficiary to payer to Carepay - ${JSON.stringify(response)}`);
+      return res.status(400).json(OperationOutcome(`Failed to register beneficiary to payer to Carepay - ${JSON.stringify(response)}`));
     }
     res.statusCode = 200;
     res.json(response);
     return;
   } catch (error) {
     // console.log(error);
-    sendSlackAlert(`Failed to post beneficiary - ${JSON.stringify(error)}`);
-    return res.status(400).json(OperationOutcome(`Failed to post beneficiary- ${JSON.stringify(error)}`));
+    sendSlackAlert(`Failed to register beneficiary to payer - ${JSON.stringify(error)}`);
+    return res.status(400).json(OperationOutcome(`Failed to register beneficiary to payer- ${JSON.stringify(error)}`));
   }
 });
 
