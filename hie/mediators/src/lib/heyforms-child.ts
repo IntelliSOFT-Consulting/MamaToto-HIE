@@ -26,7 +26,10 @@ export const childFormToFhirBundle = (payload: any) => {
         const patient = {
             resourceType: "Patient",
             id: uuidv4(),
-            identifier: [FhirIdentifier("http://example.org/national-id", "NATIONAL_ID", "Mother's ID Number",answers["NI57snEmn4bR"].toString() )],
+            identifier: [
+                FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "Mother's ID Number", answers["NI57snEmn4bR"].toString()),
+                // FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", payload.id),
+            ],
             name: [{
                 given: [answers["1WLpdlhdUoOi"]?.firstName || "Unknown"],
                 family: answers["1WLpdlhdUoOi"]?.lastName || "Unknown"
@@ -42,7 +45,8 @@ export const childFormToFhirBundle = (payload: any) => {
             id: uuidv4(),
             patient: { reference: `Patient/${patient.id}` },
             identifier: [{
-                system: "http://example.org/national-id",
+                system: "https://terminology.hl7.org/CodeSystem-v2-0203",
+                code: "NATIONAL_ID",
                 value: answers["NI57snEmn4bR"].toString()
             }],
             relationship: [{

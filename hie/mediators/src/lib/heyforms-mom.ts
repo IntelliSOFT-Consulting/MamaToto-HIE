@@ -62,7 +62,9 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
         meta: {
             profile: ['http://fhir.org/guides/who/anc-cds/StructureDefinition/anc-patient']
         },
-        identifier: [FhirIdentifier("http://example.org/national-id", "NATIONAL_ID", "National ID Number",data?.user?.nationalId )],
+        identifier: [FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number",data?.user?.nationalId ),
+            FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id),
+        ],
         active: true,
         name: [{
             use: 'official',
