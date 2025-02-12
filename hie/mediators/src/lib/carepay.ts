@@ -93,7 +93,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
   }
 }
 
-export const processIdentifiers = async (identifiers: any) => {
+export const processIdentifiers = (identifiers: any) => {
   try {
     let ids: any = {};
     for (let id of identifiers) {

@@ -117,16 +117,16 @@ export const FhirApi = async (params: any) => {
 }
 
 
-export const OperationOutcome =  (text: string) => {
+export const OperationOutcome = (text: string) => {
     return {
         "resourceType": "OperationOutcome",
         "id": "exception",
         "issue": [{
-          "severity": "error",
-          "code": "exception",
-          "details": { text }
+            "severity": "error",
+            "code": "exception",
+            "details": { text }
         }]
-      }
+    }
 }
 
 // a fetch wrapper for HAPI FHIR server.
@@ -214,7 +214,17 @@ export let createFHIRPatientSubscription = async () => {
                     type: 'rest-hook',
                     endpoint: FHIR_SUBSCRIPTION_CALLBACK_URL,
                     payload: 'application/json'
-                }
+                },
+                extension: [
+                    {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-delivery-retry-count",
+                        valueInteger: 1
+                    },
+                    {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-retry",
+                        valueBoolean: false
+                    }
+                ]
             })
         })).data
         if (response.resourceType != "OperationOutcome") {
@@ -242,7 +252,16 @@ export let createEncounterSubscription = async () => {
                     type: 'rest-hook',
                     endpoint: FHIR_SUBSCRIPTION_CALLBACK_URL,
                     payload: 'application/json'
-                }
+                },
+                extension: [
+                    {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-delivery-retry-count",
+                        valueInteger: 1
+                    }, {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-retry",
+                        valueBoolean: false
+                    }
+                ]
             })
         })).data
         if (response.resourceType != "OperationOutcome") {
@@ -271,7 +290,17 @@ export let createQuestionnaireResponseSubscription = async () => {
                     type: 'rest-hook',
                     endpoint: FHIR_SUBSCRIPTION_CALLBACK_URL,
                     payload: 'application/json'
-                }
+                },
+                extension: [
+                    {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-delivery-retry-count",
+                        valueInteger: 1
+                    },
+                    {
+                        url: "http://hapifhir.io/fhir/StructureDefinition/subscription-retry",
+                        valueBoolean: false
+                    }
+                ]
             })
         })).data
         if (response.resourceType != "OperationOutcome") {
@@ -325,15 +354,15 @@ const OPENHIM_DEV_URL = process.env.OPENHIM_DEV_URL ?? '';
 const OPENHIM_DEV_CLIENT = process.env.OPENHIM_DEV_CLIENT ?? '';
 const OPENHIM_DEV_CLIENT_PASSWORD = process.env.OPENHIM_DEV_CLIENT_PASSWORD ?? '';
 
-export const redirectToDev = async (path: string ,data: any, method: string = "POST") => {
+export const redirectToDev = async (path: string, data: any, method: string = "POST") => {
     try {
         console.log(data);
         console.log(OPENHIM_DEV_URL + path);
         let response = await fetch(OPENHIM_DEV_URL + path, {
-            method: method, ...(method !== "GET") && {body: JSON.stringify(data)},
+            method: method, ...(method !== "GET") && { body: JSON.stringify(data) },
             headers: {
                 "Authorization": 'Basic ' + Buffer.from(OPENHIM_DEV_CLIENT + ':' + OPENHIM_DEV_CLIENT_PASSWORD).toString('base64'),
-                "Content-Type":"application/json",
+                "Content-Type": "application/json",
                 "Accept": "application/json"
             }
         })
@@ -362,18 +391,18 @@ export const redirectToDev = async (path: string ,data: any, method: string = "P
 
 export let sendSlackAlert = async (message: any) => {
     try {
-        const SLACK_CHANNEL_URL = process.env.SLACK_CHANNEL_URL ?? ''; 
+        const SLACK_CHANNEL_URL = process.env.SLACK_CHANNEL_URL ?? '';
         let response = await (await fetch(SLACK_CHANNEL_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(
-                {text: `⚠️🚨 IOL mediator error: ${message}`}
+                { text: `⚠️🚨 IOL mediator error: ${message}` }
             )
         })).json();
         return response;
     } catch (error) {
-        return {error}
+        return { error }
     }
 }

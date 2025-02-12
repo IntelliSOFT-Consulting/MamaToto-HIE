@@ -24,9 +24,10 @@ router.post("/mom", async (req, res) => {
     console.log(bundle);
 
     /* Post Bundle to SHR */
-    let shrResponse = await (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle),})).data;
-    res.json(shrResponse);
-    return;
+    let shrResponse = (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle), })).data;
+    console.log(shrResponse)
+    return res.status(shrResponse?.resourceType === "Bundle" ? 201: 400).json(shrResponse);
+
   } catch (error) {
     return res.status(400).json(OperationOutcome(String(error)));
   }
@@ -34,29 +35,25 @@ router.post("/mom", async (req, res) => {
 
 
 router.post("/child", async (req, res) => {
-    try {
-      const payload = req.body;
-      if (!payload || !payload.answers) {
-        return res.status(400).json({ error: "Invalid payload" });
-      }
-  
-      /* Convert payload to FHIR Bundle */
-      const bundle = childFormToFhirBundle(payload);
-      console.log(bundle);
-      if (!bundle){
-        return res.status(400).json(OperationOutcome("Invalid payload: Failed to convert"));
-      }
-  
-      /* Post Bundle to SHR */
-      let shrResponse = await (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle),})).data;
-      res.json(shrResponse);
-      return;
-    } catch (error) {
-      res.status(500).json({
-        error: 'Error transforming data to FHIR format',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
+  try {
+    const payload = req.body;
+    if (!payload || !payload.answers) {
+      return res.status(400).json({ error: "Invalid payload" });
     }
-  });
+
+    /* Convert payload to FHIR Bundle */
+    const bundle = childFormToFhirBundle(payload);
+    console.log(bundle);
+    if (!bundle) {
+      return res.status(400).json(OperationOutcome("Invalid payload: Failed to convert"));
+    }
+
+    /* Post Bundle to SHR */
+    let shrResponse = (await FhirApi({ url: "/", method: "POST", data: JSON.stringify(bundle), })).data;
+    return res.status(shrResponse?.resourceType === "Bundle" ? 201: 400).json(shrResponse);
+  } catch (error) {
+    return res.status(400).json(OperationOutcome(String(error)));
+  }
+});
 
 export default router;
