@@ -88,13 +88,11 @@ def put_to_shr(resource_type, data, mode="DEV"):
         print(str(e))
         return None
 
-def replay_failed_questionnaire_responses():
+def replay_failed_questionnaire_responses(mode):
     
     failed_qrs = get_qr_transactions()
     for qr in failed_qrs:
         # print(qr['request']['body'])
         data = qr['request']['body']
-        put_to_shr("QuestionnaireResponse", json.loads(data))
+        put_to_shr("QuestionnaireResponse", json.loads(data), mode)
     pass
-
-replay_failed_questionnaire_responses()
