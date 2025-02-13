@@ -115,7 +115,7 @@ router.post("/Patient", async (req, res) => {
     }
     data?.identifier.push(FhirIdentifier("https://mamatoto.pharmaccess.io", "WHATSAPP_ENROLLMENT_ID", "Whatsapp Enrollment ID", (data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value)));
     // support [test phone number -> dev]
-    if ( TEST_PHONE_NUMBERS.indexOf(`${data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value}`) > -1) {
+    if (TEST_PHONE_NUMBERS.indexOf(`${data?.telecom?.[0]?.value ?? data?.telecom?.[1]?.value}`) > -1) {
       console.log(":-> Redirecting to dev");
       try {
         let response = await redirectToDev("/fhir/Patient", data);
@@ -130,13 +130,33 @@ router.post("/Patient", async (req, res) => {
     }
 
     // default & production [save to SHR]
-    let shrResponse = await ( await FhirApi({ url: "/Patient", method: "POST", data: JSON.stringify(data),})).data;
+    let shrResponse = await (await FhirApi({ url: "/Patient", method: "POST", data: JSON.stringify(data), })).data;
     if (shrResponse.resourceType === "OperationOutcome") {
       return res.status(400).json(shrResponse);
     }
     res.statusCode = 200;
     res.json(shrResponse);
     return;
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json(OperationOutcome(`${JSON.stringify(error)}`));
+  }
+});
+
+router.get("/Patient/:id", async (req, res) => {
+  try {
+    let { id } = req.params;
+    let shrResponse = await (await FhirApi({ url: `/Patient/${id}`, })).data;
+    if (shrResponse.resourceType === "Patient") {
+      return res.status(200).json(shrResponse);
+    } else {
+      let response = await redirectToDev(`/fhir/Patient/${id}`, null, 'GET');
+      console.log(JSON.stringify(response));
+      if (response.resourceType === "Patient") {
+        return res.status(200).json(response);
+      }
+      return res.status(400).json(shrResponse);
+    }
   } catch (error) {
     console.log(error);
     return res.status(400).json(OperationOutcome(`${JSON.stringify(error)}`));
