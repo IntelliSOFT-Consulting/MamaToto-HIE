@@ -2,19 +2,8 @@ import express from 'express';
 import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
 import { v4 as uuid } from 'uuid';
 import fetch from 'node-fetch';
-import { postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
+import { MomcareSchemes, postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
 import { FhirIdentifier } from '../lib/fhir';
-
-
-const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
-const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
-
-const CAREPAY_BASE_URL = process.env['CAREPAY_BASE_URL'];
-const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
-const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
-const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
-
-
 
 export const router = express.Router();
 
@@ -30,10 +19,14 @@ router.post('/carepay', async (req, res) => {
     }
     const parsedIds = processIdentifiers(data.identifier);
     let isDependant = false;
+    let scheme = MomcareSchemes.MOMCARE;
     if (data?.identifier?.[0]?.type?.coding?.[0]?.display === "Mother's ID Number") {
       isDependant = true;
     }
-    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
+    if(Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
+      scheme = MomcareSchemes.MOMCARE_SOCIAL
+    }
+    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant, scheme);
     if (JSON.stringify(carepayResponse).includes('error')) {
       if (Object.keys(parsedIds).indexOf("WHATSAPP_ENROLLMENT_ID") > -1) {
         sendTurnNotification(data, "ENROLMENT_REJECTION");
@@ -61,7 +54,7 @@ router.post('/carepay', async (req, res) => {
 });
 
 
-/* process patient from subscription */
+/* process patient payload from Patient resource subscriptions */
 router.put('/notifications/Patient/:id', async (req, res) => {
   try {
     let { id } = req.params;

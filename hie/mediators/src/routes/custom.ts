@@ -2,10 +2,11 @@ import express from "express";
 import { FhirApi, OperationOutcome, redirectToDev, sendTurnNotification } from "../lib/utils";
 import { FhirIdentifier } from "../lib/fhir";
 
+
+// PROD_UAT - PHONE_NUMBER_FILTERING
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
 const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
 
-// PHONE_NUMBER_FILTERING
 export const router = express.Router();
 
 // Custom middleware to handle application/fhir+json content type
@@ -452,10 +453,7 @@ router.post("/Observation", async (req, res) => {
     // default & production [save to SHR]
     let shrResponse = await (
       await FhirApi({
-        url: "/Observation",
-        method: "POST",
-        data: JSON.stringify(data),
-      })
+        url: "/Observation", method: "POST", data: JSON.stringify(data), })
     ).data;
     if (shrResponse.resourceType === "OperationOutcome") {
       res.statusCode = 400;
