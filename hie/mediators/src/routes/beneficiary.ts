@@ -1,7 +1,5 @@
 import express from 'express';
 import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
-import { v4 as uuid } from 'uuid';
-import fetch from 'node-fetch';
 import { MomcareSchemes, postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
 import { FhirIdentifier } from '../lib/fhir';
 
