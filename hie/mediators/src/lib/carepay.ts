@@ -7,23 +7,11 @@ const CAREPAY_CATEGORY_ID = process.env['CAREPAY_CATEGORY_ID'];
 const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
 const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
 const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
+const MOMCARE_SOCIAL_POLICY_ID = process.env['MOMCARE_SOCIAL_POLICY_ID'];
 
-const LAST_RUN_FILE = path.join(__dirname, 'last_run.txt');
 
-// Function to read the last run timestamp from the file
-const readLastRunTimestamp = (): string | null => {
-  try {
-    if (fs.existsSync(LAST_RUN_FILE)) {
-      return fs.readFileSync(LAST_RUN_FILE, 'utf8');
-    }
-  } catch (error) {
-    console.error('Error reading last run timestamp:', error);
-  }
-  return null;
-};
 
 const getCurrentDate = () => new Date().toISOString().slice(0, 10);
-
 
 export const getCarepayBeneficiaryById = async (idNumber: any) => {
   try {
@@ -58,8 +46,15 @@ export const postToBeneficiaryEndorsementMediator = async (beneficiary: any) => 
   }
 }
 
-export const postBeneficiaryEndorsement = async (data: any, dependent: boolean = false) => {
+export enum MomcareSchemes {
+  MOMCARE = "momcare",
+  MOMCARE_SOCIAL = "momcare-social"
+}
+
+export const postBeneficiaryEndorsement = async (data: any, dependent: boolean = false, scheme: MomcareSchemes = MomcareSchemes.MOMCARE) => {
   try {
+
+    /** Authentication */
     let cpLoginUrl = `${CAREPAY_BASE_URL}/usermanagement/login`;
     let authToken = await (await (fetch(cpLoginUrl, {
       method: "POST", body: JSON.stringify({
@@ -69,7 +64,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
       headers: { "Content-Type": "application/json" }
     }))).json();
     // console.log(`authtoken: ${JSON.stringify(authToken)}`)
-    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${CAREPAY_POLICY_ID}/enrollments/beneficiary`
+    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${scheme === MomcareSchemes.MOMCARE_SOCIAL?MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID}/enrollments/beneficiary`
     // console.log(cpEndpointUrl);
     let accessToken = authToken['accessToken'];
     let carepayBeneficiaryPayload
@@ -78,11 +73,10 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
       carepayBeneficiaryPayload = await fhirPatientToCarepayDependent(data, primaryIdNumber);
 
     }else{
-      carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data);
+      carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, );
     }
     console.log(carepayBeneficiaryPayload);
-    let response = await (await (fetch(cpEndpointUrl, {
-      method: "POST",
+    let response = await (await (fetch(cpEndpointUrl, { method: "POST",
       body: JSON.stringify(carepayBeneficiaryPayload),
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` }
     }))).json();
@@ -107,7 +101,7 @@ export const processIdentifiers = (identifiers: any) => {
   }
 }
 
-export const fhirPatientToCarepayBeneficiary = async (patient: any) => {
+export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: MomcareSchemes = MomcareSchemes.MOMCARE) => {
   try {
     let gender = String(patient.gender).toUpperCase();
     let _date = String(patient.birthDate).split("-");
@@ -146,7 +140,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any) => {
       // "weight": -1.7976931348623157e+308,
       // "bmi": -1.7976931348623157e+308,
       "categoryId": `${CAREPAY_CATEGORY_ID}`,
-      "policyId": `${CAREPAY_POLICY_ID}`,
+      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
       "relationship": "PRIMARY",
       "phoneNumber": n?.phone ?? n?.mobile,
       // "dateOfEnrollment": "2014-02-07",
@@ -177,7 +171,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any) => {
   }
 }
 
-export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string) => {
+export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string, scheme: string = "momcare") => {
   try {
  
     let gender = String(patient.gender).toUpperCase();
@@ -192,7 +186,7 @@ export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumbe
       "dateOfBirth": patient?.birthDate,
       "residentialCountryCode": "string",
       "categoryId": `${CAREPAY_CATEGORY_ID}`,
-      "policyId": `${CAREPAY_POLICY_ID}`,
+      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
       "relationship": "CHILD",
       "familyIdentifier":primaryIdNumber,
       maritalStatus:"SINGLE",
