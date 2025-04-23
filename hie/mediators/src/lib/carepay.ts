@@ -8,6 +8,7 @@ const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
 const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
 const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
 const MOMCARE_SOCIAL_POLICY_ID = process.env['MOMCARE_SOCIAL_POLICY_ID'];
+const MOMCARE_SOCIAL_CATEGORY_ID = process.env['MOMCARE_SOCIAL_CATEGORY_ID'];
 
 
 
@@ -64,7 +65,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
       headers: { "Content-Type": "application/json" }
     }))).json();
     // console.log(`authtoken: ${JSON.stringify(authToken)}`)
-    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${scheme === MomcareSchemes.MOMCARE_SOCIAL?MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID}/enrollments/beneficiary`
+    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${scheme === "momcare-social" ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID}/enrollments/beneficiary`
     // console.log(cpEndpointUrl);
     let accessToken = authToken['accessToken'];
     let carepayBeneficiaryPayload
@@ -73,7 +74,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
       carepayBeneficiaryPayload = await fhirPatientToCarepayDependent(data, primaryIdNumber);
 
     }else{
-      carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, );
+      carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, scheme);
     }
     console.log(carepayBeneficiaryPayload);
     let response = await (await (fetch(cpEndpointUrl, { method: "POST",
@@ -139,8 +140,8 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: Momc
       // "height": 140,
       // "weight": -1.7976931348623157e+308,
       // "bmi": -1.7976931348623157e+308,
-      "categoryId": `${CAREPAY_CATEGORY_ID}`,
-      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
+      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : CAREPAY_CATEGORY_ID}`,
+      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
       "relationship": "PRIMARY",
       "phoneNumber": n?.phone ?? n?.mobile,
       // "dateOfEnrollment": "2014-02-07",
@@ -185,8 +186,8 @@ export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumbe
       "gender": gender,
       "dateOfBirth": patient?.birthDate,
       "residentialCountryCode": "string",
-      "categoryId": `${CAREPAY_CATEGORY_ID}`,
-      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
+      "categoryId": `${scheme === "momcare-social" ? MOMCARE_SOCIAL_CATEGORY_ID : CAREPAY_CATEGORY_ID}`,
+      "policyId": `${scheme === "momcare-social" ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
       "relationship": "CHILD",
       "familyIdentifier":primaryIdNumber,
       maritalStatus:"SINGLE",

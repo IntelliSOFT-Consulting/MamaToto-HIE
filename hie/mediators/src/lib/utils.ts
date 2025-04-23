@@ -6,6 +6,7 @@ import customRegistrationConfig from '../config/customRegistrationMediators.json
 import clientRegistryConfig from '../config/clientRegistryMediator.json'
 import heyformsConfig from '../config/heyformsMediator.json'
 import babyEnrollmentConfig from '../config/babyEnrolment.json'
+import momCareSocialConfig from '../config/momcareSocialMediator.json'
 
 
 
@@ -24,7 +25,8 @@ const mediators = [
     // utilsConfig,
     clientRegistryConfig,
     heyformsConfig,
-    babyEnrollmentConfig
+    babyEnrollmentConfig,
+    momCareSocialConfig
 ];
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>

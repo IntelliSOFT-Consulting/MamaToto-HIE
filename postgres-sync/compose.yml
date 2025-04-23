@@ -1,0 +1,20 @@
+version: '3.8'
+
+networks:
+  cloudbuild:
+    external: true
+
+services:
+  pg-sync:
+    build:
+      context: ../postgres-sync
+      dockerfile: Dockerfile
+    container_name: pg-sync
+    networks:
+      - cloudbuild
+    env_file:
+      - .env
+    volumes:
+      - ./sync-to-pg.sh:/app/sync-to-pg.sh
+      - ./crontab.txt:/app/crontab.txt
+    # entrypoint: ["/bin/bash", "-c", "cron && tail -f /var/log/cron.log"]
