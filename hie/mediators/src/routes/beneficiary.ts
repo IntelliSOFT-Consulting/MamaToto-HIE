@@ -22,7 +22,7 @@ router.post('/carepay', async (req, res) => {
       isDependant = true;
     }
     if(Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
-      scheme = MomcareSchemes.MOMCARE_SOCIAL
+      scheme = MomcareSchemes.MOMCARE_SOCIAL;
     }
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant, scheme);
     if (JSON.stringify(carepayResponse).includes('error')) {
