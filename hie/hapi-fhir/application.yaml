@@ -8,7 +8,7 @@ spring:
     baselineOnMigrate: true
   datasource:
     driver: org.postgresql.Driver
-    url: jdbc:postgresql://shr-postgres:5432/hapi
+    url: jdbc:postgresql://hapi-fhir-postgres:5432/hapi
     dialect: org.hibernate.dialect.PostgreSQL95Dialect
     username: postgres
     password: hapi123
@@ -54,8 +54,8 @@ hapi:
     #    allow_multiple_delete: true
       #  allow_override_default_search_params: true
     auto_create_placeholder_reference_targets: true
-    # default_encoding: JSON
-    #    default_page_size: 20
+    default_encoding: JSON
+    default_page_size: 20
     #    delete_expunge_enabled: true
     #    enable_repository_validating_interceptor: false
     enable_index_missing_fields: true
