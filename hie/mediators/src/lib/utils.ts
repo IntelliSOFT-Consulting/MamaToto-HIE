@@ -6,6 +6,7 @@ import customRegistrationConfig from '../config/customRegistrationMediators.json
 import clientRegistryConfig from '../config/clientRegistryMediator.json'
 import heyformsConfig from '../config/heyformsMediator.json'
 import babyEnrollmentConfig from '../config/babyEnrolment.json'
+import fhirBaseConfig from '../config/fhirBaseMediator.json'
 import momCareSocialConfig from '../config/momcareSocialMediator.json'
 
 
@@ -26,6 +27,7 @@ const mediators = [
     clientRegistryConfig,
     heyformsConfig,
     babyEnrollmentConfig,
+    fhirBaseConfig,
     momCareSocialConfig
 ];
 
