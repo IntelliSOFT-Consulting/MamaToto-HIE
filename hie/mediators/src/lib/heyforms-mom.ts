@@ -384,8 +384,8 @@ export const processJsonData = (jsonData: any) => {
             currentHealthConditions: [] // Only populated if hasHealthConditions is true
         },
         organization:{
-            facilityId: jsonData?.hiddenFields?.[0]?.id || '',
-            facilityName: jsonData?.hiddenFields?.[1]?.name || '',
+            facilityId: (jsonData?.hiddenFields?.[0]?.value).split(':')[1] || '',
+            facilityName: (jsonData?.hiddenFields?.[1]?.value).split(':')[0] || '',
         }
     };
 

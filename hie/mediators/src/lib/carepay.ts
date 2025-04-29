@@ -75,6 +75,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
 
     }else{
       carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, scheme);
+      console.log(carepayBeneficiaryPayload);
     }
     console.log(carepayBeneficiaryPayload);
     let response = await (await (fetch(cpEndpointUrl, { method: "POST",
