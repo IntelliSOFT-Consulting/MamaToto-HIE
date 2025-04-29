@@ -15,6 +15,7 @@ interface JsonRequest {
         maritalStatus: string;
         nationality: string;
         nationalId: string;
+        passportNo: string;
     };
     medical: {
         lastMenstrualPeriod: string;
@@ -66,9 +67,18 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
         meta: {
             profile: ['http://fhir.org/guides/who/anc-cds/StructureDefinition/anc-patient']
         },
-        identifier: [FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number",data?.user?.nationalId ),
-            FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id),
-        ],
+        // identifier: [FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number", data?.user?.nationalId ),
+        //     FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id),
+        //     FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "PASSPORT_NO", "Passport Number", data?.user?.passportNo )
+        // ],
+        identifier: [
+            data?.user?.nationalId
+              ? FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number", data.user.nationalId)
+              : data?.user?.passportNo
+              ? FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "PASSPORT", "Passport Number", data.user.passportNo)
+              : null,
+            FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id)
+          ].filter(Boolean),
         active: true,
         name: [{
             use: 'official',
@@ -363,7 +373,8 @@ export const processJsonData = (jsonData: any) => {
             dateOfBirth: formatDate(findAnswer('IdSaw1CLBrNx')?.value) || '',
             maritalStatus: getMultiChoiceValue(findAnswer('d4rox3pBjUkJ')),
             nationality: getMultiChoiceValue(findAnswer('5V4y2SHD5Ajq')),
-            nationalId: findAnswer('t0BJ95juc6zT')?.value?.toString() || ''
+            nationalId: findAnswer('t0BJ95juc6zT')?.value?.toString() || '',
+            passportNo: findAnswer('60z5FQAhOoy7')?.value?.toString() || ''
         },
         medical: {
             lastMenstrualPeriod: formatDate(findAnswer('Z57KvxvsYjEy')?.value) || '',

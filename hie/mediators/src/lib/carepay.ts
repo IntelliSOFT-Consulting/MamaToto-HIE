@@ -129,7 +129,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: Momc
       // "nationality": "KE",
       "identification": [
         {
-          "type": "NATIONAL_ID",
+          "type": `${patient?.identifier?.[0]?.code}` === "PASSPORT" ? "PASSPORT" : "NATIONAL_ID",
           "number": `${patient?.identifier?.[0]?.value}`
         }
       ],
