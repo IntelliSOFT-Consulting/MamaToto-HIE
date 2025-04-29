@@ -70,7 +70,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
     }
 
     /* Post patient to Carepay - webforms */
-    if (Object.keys(parsedIds).indexOf("NATIONAL_ID") > -1) {
+    if (Object.keys(parsedIds).indexOf("NATIONAL_ID") > -1 || Object.keys(parsedIds).indexOf("PASSPORT") > -1) {
       const response = await postToBeneficiaryEndorsementMediator(data);
       console.log(JSON.stringify(response));
       if (JSON.stringify(response).includes('error')) {
@@ -104,6 +104,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
     const IDENTIFIERS = String(process.env.IDENTIFIERS).split(",");
     IDENTIFIERS.push("NATIONAL_ID")
     IDENTIFIERS.push("HEYFORM_ID")
+    IDENTIFIERS.push("PASSPORT")
 
     /* If these ids have already been assigned, don't register to Carepay */
     if (tag || IDENTIFIERS.some(id => Object.keys(parsedIds).includes(id))) {
