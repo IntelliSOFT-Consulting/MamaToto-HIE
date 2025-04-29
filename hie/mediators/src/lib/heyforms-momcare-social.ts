@@ -181,7 +181,7 @@ export const momCareSocialToFhirBundle = (data: MomCareSocialForm): Bundle => {
                 linkId: 'clinic-reference',
                 text: 'Clinic Reference',
                 answer: [{
-                    valueString: processedData.hidden.clinicReference
+                    valueString: processedData.organization.facilityName
                 }]
             },
             {
@@ -223,8 +223,35 @@ export const momCareSocialToFhirBundle = (data: MomCareSocialForm): Bundle => {
         valueDateTime: processedData.medical.lastMenstrualPeriod
     };
 
+    const organization: FhirResource = {
+        resourceType: 'Organization',
+        id: processedData.organization.facilityId,
+        active: true,
+        name: processedData.organization.facilityName,
+        type: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+                code: 'clinic',
+                display: 'Clinic',
+              },
+            ],
+          },
+        ]
+    }
+
+
+
     // Create bundle entries
     const entries: BundleEntry[] = [
+        {
+            resource: organization,
+            request: {
+                method: 'PUT',
+                url: `Organization/${processedData.organization.facilityId}`
+            }
+        },
         {
             resource: patient,
             request: {
@@ -484,8 +511,9 @@ export const processJsonData = (jsonData: MomCareSocialForm) => {
             skippedMeals: findAnswer('0sgFOukUAJWC')?.value === 'aZQPgORSRVrv', // Yes value
             financialPreparation: findAnswer('ZzmoVIuW2R3C')?.value === 'gLXHICJexQW9' // Yes value
         },
-        hidden: {
-            clinicReference: clinicRef
+        organization:{
+            facilityId: jsonData?.hiddenFields?.[0]?.id || '',
+            facilityName: jsonData?.hiddenFields?.[1]?.name || '',
         }
     };
 

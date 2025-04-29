@@ -23,6 +23,10 @@ interface JsonRequest {
         hasHealthConditions: boolean;
         currentHealthConditions?: string[];
     };
+    organization:{
+        facilityId?: string;
+        facilityName?: string;
+    }
 }
 
 // FHIR Response types
@@ -117,9 +121,33 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
         effectiveDateTime: data.medical.lastMenstrualPeriod,
         valueDateTime: data.medical.lastMenstrualPeriod
     };
-
+    const organization: FhirResource = {
+        resourceType: 'Organization',
+        id: data.organization.facilityId || '',
+        active: true,
+        name: data.organization.facilityName,
+        type: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+                code: 'clinic',
+                display: 'Clinic',
+              },
+            ],
+          },
+        ]
+    }
     // Create bundle entries
     const entries: BundleEntry[] = [
+        {
+            // fullUrl: `urn:uuid:${organization.id}`,
+            resource: organization,
+            request: {
+                method: 'PUT',
+                url: `Organization/${organization.id}`
+            }
+        },
         {
             // fullUrl: `urn:uuid:${patient.id}`,
             resource: patient,
@@ -193,6 +221,8 @@ const getMaritalStatusCode = (status: string): string => {
     };
     return codes[status.toLowerCase()] || 'UNK';
 };
+
+
 
 const createPregnancyHistory = (patientId: string, complications: string[]): FhirResource => {
     const resource: FhirResource = {
@@ -341,6 +371,10 @@ export const processJsonData = (jsonData: any) => {
             previousPregnancyComplications: [], // Only relevant if previously pregnant
             hasHealthConditions: getMultiChoiceValue(findAnswer('ADdot9NuxOL6')) === 'Yes',
             currentHealthConditions: [] // Only populated if hasHealthConditions is true
+        },
+        organization:{
+            facilityId: jsonData?.hiddenFields?.[0]?.id || '',
+            facilityName: jsonData?.hiddenFields?.[1]?.name || '',
         }
     };
 
