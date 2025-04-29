@@ -385,7 +385,7 @@ export const processJsonData = (jsonData: any) => {
         },
         organization:{
             facilityId: (jsonData?.hiddenFields?.[0]?.value).split(':')[1] || '',
-            facilityName: (jsonData?.hiddenFields?.[1]?.value).split(':')[0] || '',
+            facilityName: (jsonData?.hiddenFields?.[0]?.value).split(':')[0] || '',
         }
     };
 
