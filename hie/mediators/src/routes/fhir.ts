@@ -1,9 +1,7 @@
 import express from 'express';
-import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
-import { v4 as uuid } from 'uuid';
+import { FhirApi, OperationOutcome, sendSlackAlert } from '../lib/utils';
 import fetch from 'node-fetch';
-import { fetchVisits, fhirPatientToCarepayBeneficiary, processIdentifiers } from '../lib/carepay';
-import { processJsonData } from '../lib/heyforms-mom';
+import { processIdentifiers } from '../lib/carepay';
 
 
 const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
