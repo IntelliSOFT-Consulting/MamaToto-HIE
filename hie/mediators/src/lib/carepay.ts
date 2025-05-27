@@ -9,6 +9,8 @@ const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
 const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
 const MOMCARE_SOCIAL_POLICY_ID = process.env['MOMCARE_SOCIAL_POLICY_ID'];
 const MOMCARE_SOCIAL_CATEGORY_ID = process.env['MOMCARE_SOCIAL_CATEGORY_ID'];
+const MOMCARE_HYBRID_POLICY_ID = process.env['MOMCARE_HYBRID_POLICY_ID'] ?? "";
+const MOMCARE_HYBRID_CATEGORY_ID = process.env['MOMCARE_HYBRID_CATEGORY_ID'] ?? "";
 
 
 
@@ -49,7 +51,8 @@ export const postToBeneficiaryEndorsementMediator = async (beneficiary: any) => 
 
 export enum MomcareSchemes {
   MOMCARE = "momcare",
-  MOMCARE_SOCIAL = "momcare-social"
+  MOMCARE_SOCIAL = "momcare-social",
+  MOMCARE_HYBRID = "momcare-hybrid"
 }
 
 export const postBeneficiaryEndorsement = async (data: any, dependent: boolean = false, scheme: MomcareSchemes = MomcareSchemes.MOMCARE) => {
@@ -65,7 +68,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
       headers: { "Content-Type": "application/json" }
     }))).json();
     // console.log(`authtoken: ${JSON.stringify(authToken)}`)
-    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${scheme === "momcare-social" ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID}/enrollments/beneficiary`
+    let cpEndpointUrl = `${CAREPAY_BASE_URL}/beneficiary/policies/${scheme === "momcare-social" ? MOMCARE_SOCIAL_POLICY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID : CAREPAY_POLICY_ID}/enrollments/beneficiary`
     // console.log(cpEndpointUrl);
     let accessToken = authToken['accessToken'];
     let carepayBeneficiaryPayload
@@ -140,8 +143,8 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: Momc
       // "height": 140,
       // "weight": -1.7976931348623157e+308,
       // "bmi": -1.7976931348623157e+308,
-      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : CAREPAY_CATEGORY_ID}`,
-      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
+      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID : CAREPAY_CATEGORY_ID}`,
+      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_POLICY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID: CAREPAY_POLICY_ID }`,
       "relationship": "PRIMARY",
       "phoneNumber": n?.phone ?? n?.mobile,
       // "dateOfEnrollment": "2014-02-07",
