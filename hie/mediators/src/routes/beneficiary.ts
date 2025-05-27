@@ -24,6 +24,9 @@ router.post('/carepay', async (req, res) => {
     if(Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
       scheme = MomcareSchemes.MOMCARE_SOCIAL;
     }
+    if(data?.managingOrganization?.reference?.includes("15767")) {
+      scheme = MomcareSchemes.MOMCARE_HYBRID;
+    }
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant, scheme);
     if (JSON.stringify(carepayResponse).includes('error')) {
       if (Object.keys(parsedIds).indexOf("WHATSAPP_ENROLLMENT_ID") > -1) {

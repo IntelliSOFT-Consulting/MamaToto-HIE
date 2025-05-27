@@ -98,6 +98,10 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
                 system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus',
                 code: getMaritalStatusCode(data.user.maritalStatus)
             }]
+        },
+        managingOrganization: {
+            reference: `Organization/${data.organization.facilityId || ''}`,
+            display: data.organization.facilityName || ''
         }
     };
 
