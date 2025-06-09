@@ -143,7 +143,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: Momc
       // "height": 140,
       // "weight": -1.7976931348623157e+308,
       // "bmi": -1.7976931348623157e+308,
-      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID : CAREPAY_CATEGORY_ID}`,
+      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_CATEGORY_ID : CAREPAY_CATEGORY_ID}`,
       "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_POLICY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID: CAREPAY_POLICY_ID }`,
       "relationship": "PRIMARY",
       "phoneNumber": n?.phone ?? n?.mobile,
