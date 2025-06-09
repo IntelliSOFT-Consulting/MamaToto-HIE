@@ -74,7 +74,7 @@ export const postBeneficiaryEndorsement = async (data: any, dependent: boolean =
     let carepayBeneficiaryPayload
     if(dependent){
       let primaryIdNumber = data?.identifier?.[0]?.value;
-      carepayBeneficiaryPayload = await fhirPatientToCarepayDependent(data, primaryIdNumber);
+      carepayBeneficiaryPayload = await fhirPatientToCarepayDependent(data, primaryIdNumber, scheme);
 
     }else{
       carepayBeneficiaryPayload = await fhirPatientToCarepayBeneficiary(data, scheme);
@@ -175,7 +175,7 @@ export const fhirPatientToCarepayBeneficiary = async (patient: any, scheme: Momc
   }
 }
 
-export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string, scheme: string = "momcare") => {
+export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumber: string, scheme: string ) => {
   try {
  
     let gender = String(patient.gender).toUpperCase();
@@ -189,8 +189,8 @@ export const fhirPatientToCarepayDependent = async (patient: any, primaryIdNumbe
       "gender": gender,
       "dateOfBirth": patient?.birthDate,
       "residentialCountryCode": "string",
-      "categoryId": `${scheme === "momcare-social" ? MOMCARE_SOCIAL_CATEGORY_ID : CAREPAY_CATEGORY_ID}`,
-      "policyId": `${scheme === "momcare-social" ? MOMCARE_SOCIAL_POLICY_ID : CAREPAY_POLICY_ID }`,
+      "categoryId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_CATEGORY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID : CAREPAY_CATEGORY_ID}`,
+      "policyId": `${scheme === MomcareSchemes.MOMCARE_SOCIAL.valueOf() ? MOMCARE_SOCIAL_POLICY_ID : (scheme === "momcare-hybrid") ? MOMCARE_HYBRID_POLICY_ID: CAREPAY_POLICY_ID }`,
       "relationship": "CHILD",
       "familyIdentifier":primaryIdNumber,
       maritalStatus:"SINGLE",
