@@ -35,7 +35,15 @@ export const childFormToFhirBundle = (payload: any) => {
                 family: answers["1WLpdlhdUoOi"]?.lastName || "Unknown"
             }],
             gender: gender || "unknown", // Default to "unknown" if gender is not provided
-            birthDate: answers["wfD0VClrONfM"] ? formatDate(answers["wfD0VClrONfM"]) : undefined
+            birthDate: answers["wfD0VClrONfM"] ? formatDate(answers["wfD0VClrONfM"]) : undefined,
+            organization: {
+                facilityId: (payload?.hiddenFields?.[0]?.value).split(':')[1] || '',
+                facilityName: (payload?.hiddenFields?.[0]?.value).split(':')[0] || '',
+            },
+            managingOrganization: {
+                reference: `Organization/${(payload?.hiddenFields?.[0]?.value).split(':')[1] || ''}`,
+                display: (payload?.hiddenFields?.[0]?.value).split(':')[0] || ''
+            }
         };
 
 
