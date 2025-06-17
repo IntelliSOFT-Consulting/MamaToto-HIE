@@ -4,6 +4,7 @@ networks:
     hapi-fhir:
     mediators:
     cloudbuild:
+        external: true
 
 services:
     mongo:
@@ -36,6 +37,7 @@ services:
         restart: unless-stopped
         networks:
             - hapi-fhir
+            - cloudbuild
         environment:
             POSTGRES_USER: postgres
             POSTGRES_DB: hapi

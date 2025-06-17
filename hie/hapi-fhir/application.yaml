@@ -53,7 +53,7 @@ hapi:
     #    supported_resource_types:
     #      - Patient
     #      - Observation
-    #    allow_cascading_deletes: true
+    allow_cascading_deletes: true
     #    allow_contains_searches: true
     #    allow_external_references: true
     #    allow_multiple_delete: true

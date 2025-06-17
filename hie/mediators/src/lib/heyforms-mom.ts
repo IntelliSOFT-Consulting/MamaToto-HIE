@@ -15,6 +15,7 @@ interface JsonRequest {
         maritalStatus: string;
         nationality: string;
         nationalId: string;
+        passportNo: string;
     };
     medical: {
         lastMenstrualPeriod: string;
@@ -23,6 +24,10 @@ interface JsonRequest {
         hasHealthConditions: boolean;
         currentHealthConditions?: string[];
     };
+    organization:{
+        facilityId?: string;
+        facilityName?: string;
+    }
 }
 
 // FHIR Response types
@@ -62,9 +67,18 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
         meta: {
             profile: ['http://fhir.org/guides/who/anc-cds/StructureDefinition/anc-patient']
         },
-        identifier: [FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number",data?.user?.nationalId ),
-            FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id),
-        ],
+        // identifier: [FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number", data?.user?.nationalId ),
+        //     FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id),
+        //     FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "PASSPORT_NO", "Passport Number", data?.user?.passportNo )
+        // ],
+        identifier: [
+            data?.user?.nationalId
+              ? FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "NATIONAL_ID", "National ID Number", data.user.nationalId)
+              : data?.user?.passportNo
+              ? FhirIdentifier("https://terminology.hl7.org/CodeSystem-v2-0203", "PASSPORT", "Passport Number", data.user.passportNo)
+              : null,
+            FhirIdentifier("https://mamatoto.pharmaccess.io", "HEYFORM_ID", "HeyForm ID", data.id)
+          ].filter(Boolean),
         active: true,
         name: [{
             use: 'official',
@@ -84,6 +98,10 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
                 system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus',
                 code: getMaritalStatusCode(data.user.maritalStatus)
             }]
+        },
+        managingOrganization: {
+            reference: `Organization/${data.organization.facilityId || ''}`,
+            display: data.organization.facilityName || ''
         }
     };
 
@@ -117,9 +135,33 @@ export const momFormToFhirBundle = (data: JsonRequest): Bundle => {
         effectiveDateTime: data.medical.lastMenstrualPeriod,
         valueDateTime: data.medical.lastMenstrualPeriod
     };
-
+    const organization: FhirResource = {
+        resourceType: 'Organization',
+        id: data.organization.facilityId || '',
+        active: true,
+        name: data.organization.facilityName,
+        type: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+                code: 'clinic',
+                display: 'Clinic',
+              },
+            ],
+          },
+        ]
+    }
     // Create bundle entries
     const entries: BundleEntry[] = [
+        {
+            // fullUrl: `urn:uuid:${organization.id}`,
+            resource: organization,
+            request: {
+                method: 'PUT',
+                url: `Organization/${organization.id}`
+            }
+        },
         {
             // fullUrl: `urn:uuid:${patient.id}`,
             resource: patient,
@@ -193,6 +235,8 @@ const getMaritalStatusCode = (status: string): string => {
     };
     return codes[status.toLowerCase()] || 'UNK';
 };
+
+
 
 const createPregnancyHistory = (patientId: string, complications: string[]): FhirResource => {
     const resource: FhirResource = {
@@ -333,7 +377,8 @@ export const processJsonData = (jsonData: any) => {
             dateOfBirth: formatDate(findAnswer('IdSaw1CLBrNx')?.value) || '',
             maritalStatus: getMultiChoiceValue(findAnswer('d4rox3pBjUkJ')),
             nationality: getMultiChoiceValue(findAnswer('5V4y2SHD5Ajq')),
-            nationalId: findAnswer('t0BJ95juc6zT')?.value?.toString() || ''
+            nationalId: findAnswer('t0BJ95juc6zT')?.value?.toString() || '',
+            passportNo: findAnswer('60z5FQAhOoy7')?.value?.toString() || ''
         },
         medical: {
             lastMenstrualPeriod: formatDate(findAnswer('Z57KvxvsYjEy')?.value) || '',
@@ -341,6 +386,10 @@ export const processJsonData = (jsonData: any) => {
             previousPregnancyComplications: [], // Only relevant if previously pregnant
             hasHealthConditions: getMultiChoiceValue(findAnswer('ADdot9NuxOL6')) === 'Yes',
             currentHealthConditions: [] // Only populated if hasHealthConditions is true
+        },
+        organization:{
+            facilityId: (jsonData?.hiddenFields?.[0]?.value).split(':')[1] || '',
+            facilityName: (jsonData?.hiddenFields?.[0]?.value).split(':')[0] || '',
         }
     };
 

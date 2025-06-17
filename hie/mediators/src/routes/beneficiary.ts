@@ -1,20 +1,7 @@
 import express from 'express';
 import { FhirApi, OperationOutcome, sendSlackAlert, sendTurnNotification } from '../lib/utils';
-import { v4 as uuid } from 'uuid';
-import fetch from 'node-fetch';
-import { postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
+import { MomcareSchemes, postBeneficiaryEndorsement, postToBeneficiaryEndorsementMediator, processIdentifiers } from '../lib/carepay';
 import { FhirIdentifier } from '../lib/fhir';
-
-
-const _TEST_PHONE_NUMBERS = process.env.TEST_PHONE_NUMBERS ?? "";
-const TEST_PHONE_NUMBERS = _TEST_PHONE_NUMBERS.split(",");
-
-const CAREPAY_BASE_URL = process.env['CAREPAY_BASE_URL'];
-const CAREPAY_USERNAME = process.env['CAREPAY_USERNAME'];
-const CAREPAY_PASSWORD = process.env['CAREPAY_PASSWORD'];
-const CAREPAY_POLICY_ID = process.env['CAREPAY_POLICY_ID'];
-
-
 
 export const router = express.Router();
 
@@ -30,10 +17,17 @@ router.post('/carepay', async (req, res) => {
     }
     const parsedIds = processIdentifiers(data.identifier);
     let isDependant = false;
+    let scheme = MomcareSchemes.MOMCARE;
     if (data?.identifier?.[0]?.type?.coding?.[0]?.display === "Mother's ID Number") {
       isDependant = true;
     }
-    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant);
+    if(Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
+      scheme = MomcareSchemes.MOMCARE_SOCIAL;
+    }
+    if(data?.managingOrganization?.reference?.includes("15767")) {
+      scheme = MomcareSchemes.MOMCARE_HYBRID;
+    }
+    const carepayResponse = await postBeneficiaryEndorsement(data, isDependant, scheme);
     if (JSON.stringify(carepayResponse).includes('error')) {
       if (Object.keys(parsedIds).indexOf("WHATSAPP_ENROLLMENT_ID") > -1) {
         sendTurnNotification(data, "ENROLMENT_REJECTION");
@@ -61,7 +55,7 @@ router.post('/carepay', async (req, res) => {
 });
 
 
-/* process patient from subscription */
+/* process patient payload from Patient resource subscriptions */
 router.put('/notifications/Patient/:id', async (req, res) => {
   try {
     let { id } = req.params;
@@ -79,7 +73,7 @@ router.put('/notifications/Patient/:id', async (req, res) => {
     }
 
     /* Post patient to Carepay - webforms */
-    if (Object.keys(parsedIds).indexOf("NATIONAL_ID") > -1) {
+    if (Object.keys(parsedIds).indexOf("NATIONAL_ID") > -1 || Object.keys(parsedIds).indexOf("PASSPORT") > -1) {
       const response = await postToBeneficiaryEndorsementMediator(data);
       console.log(JSON.stringify(response));
       if (JSON.stringify(response).includes('error')) {
@@ -113,6 +107,7 @@ router.put('/notifications/QuestionnaireResponse/:id', async (req, res) => {
     const IDENTIFIERS = String(process.env.IDENTIFIERS).split(",");
     IDENTIFIERS.push("NATIONAL_ID")
     IDENTIFIERS.push("HEYFORM_ID")
+    IDENTIFIERS.push("PASSPORT")
 
     /* If these ids have already been assigned, don't register to Carepay */
     if (tag || IDENTIFIERS.some(id => Object.keys(parsedIds).includes(id))) {

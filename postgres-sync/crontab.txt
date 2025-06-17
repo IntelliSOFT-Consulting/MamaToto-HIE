@@ -1,0 +1,1 @@
+*/30 * * * * /app/sync-to-pg.sh
