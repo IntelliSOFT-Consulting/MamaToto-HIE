@@ -1,13 +1,31 @@
 import express, { Request, Response } from "express";
 import { FhirApi } from "../lib/utils";
 import { v4 } from "uuid";
+import { findKeycloakUser, getCurrentUserInfo } from "../lib/keycloak";
+import { get } from "http";
 const router = express.Router();
 router.use(express.json());
 
 
 router.post("/request", async (req: Request, res: Response) => {
     try {
-        let { facility, passport, idNumber, birthCertificate, patient } = req.body;
+        let { passport, idNumber, birthCertificate, patient } = req.body;
+
+        let token = req.headers.authorization?.split(' ')[1] || null;
+        if (!token || req.headers.authorization?.split(' ')[0] != "Bearer") {
+            res.statusCode = 401;
+            res.json({ status: "error", error: "Bearer token is required but not provided" });
+            return;
+        }
+        let currentUser = await getCurrentUserInfo(token);
+        if (!currentUser) {
+            res.statusCode = 401;
+            res.json({ status: "error", error: "Invalid access token" });
+            return;
+        }
+        // let userInfo = await findKeycloakUser(currentUser.preferred_username);
+
+        let facilityId = currentUser.family_name;
         
         const consentId = v4();
         let patientData: any = null;
@@ -28,8 +46,7 @@ router.post("/request", async (req: Request, res: Response) => {
             }
         }
 
-        patient = (await FhirApi(`/Patient/${patient}`)).data;
-        console.log("Patient", patient);
+        patient = (await FhirApi(`/Patient/${patientData?.id}`)).data;
         if (patient?.resourceType !== "Patient") {
             res.statusCode = 404;
             res.json({ error: "Patient not found", status: "error" });
@@ -50,7 +67,7 @@ router.post("/request", async (req: Request, res: Response) => {
                 },
                 organization: [
                     {
-                        reference: `Organization/${facility}`
+                        reference: `Organization/${facilityId}`
                     }
                 ],
                 category: [
