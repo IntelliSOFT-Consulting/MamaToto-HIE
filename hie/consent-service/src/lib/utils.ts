@@ -1,6 +1,5 @@
 
 // ✅ Do this if using TYPESCRIPT
-import { STATUS_CODES } from 'http';
 import { RequestInfo, RequestInit } from 'node-fetch';
 
 const fetch = (url: RequestInfo, init?: RequestInit) =>

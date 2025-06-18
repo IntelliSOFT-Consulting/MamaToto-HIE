@@ -64,6 +64,7 @@ router.post("/login", async (req: Request, res: Response) => {
             res.json({ status: "error", error: `${token.error} - ${token.error_description}` })
             return;
         }
+        
 
         let userInfo = await findKeycloakUser(clientId);
         if (!userInfo) {
