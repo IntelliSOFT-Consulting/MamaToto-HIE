@@ -18,7 +18,7 @@ router.post("/register", async (req: Request, res: Response) => {
             password = generatePassword(12);
         }
 
-        idNumber = v4().replace(/-/g, '');
+        idNumber = String("POC-" + v4().replace(/-/g, '')).toUpperCase();
         password = v4().replace(/-/g, '');
 
         console.log(req.body);

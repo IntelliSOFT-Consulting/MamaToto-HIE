@@ -3,8 +3,6 @@ import { DecodeResult, EncodeResult, PartialSession, Session, ExpirationStatus }
 import { Request, Response, NextFunction } from 'express';
 
 
-
-
 export function encodeSession(secretKey: string, partialSession: PartialSession): EncodeResult {
     // Always use HS512 to sign the token
     const algorithm: TAlgorithm = "HS512"

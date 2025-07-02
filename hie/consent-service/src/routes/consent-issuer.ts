@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express";
-import { FhirApi } from "../lib/utils";
+import { FhirApi, OperationOutcome } from "../lib/utils";
 import { v4 } from "uuid";
 import { findKeycloakUser, getCurrentUserInfo } from "../lib/keycloak";
 import { get } from "http";
+import { extension } from "mime-types";
+import { issueConsent } from "../lib/consent";
 const router = express.Router();
 router.use(express.json());
 
@@ -26,10 +28,9 @@ router.post("/request", async (req: Request, res: Response) => {
         // let userInfo = await findKeycloakUser(currentUser.preferred_username);
 
         let facilityId = currentUser.family_name;
-        
-        const consentId = v4();
+
         let patientData: any = null;
-        if(idNumber ?? passport ?? birthCertificate){
+        if (idNumber ?? passport ?? birthCertificate) {
             patientData = (await FhirApi(`/Patient?identifier=${idNumber ?? passport ?? birthCertificate}`)).data;
             if (!patientData || patientData.resourceType !== "Bundle" || patientData.total === 0) {
                 res.statusCode = 404;
@@ -37,7 +38,7 @@ router.post("/request", async (req: Request, res: Response) => {
                 return;
             }
             patientData = patientData.entry[0].resource;
-        }else if (patient) {
+        } else if (patient) {
             patientData = (await FhirApi(`/Patient/${patient}`)).data;
             if (!patientData || patientData.resourceType !== "Patient") {
                 res.statusCode = 404;
@@ -53,37 +54,13 @@ router.post("/request", async (req: Request, res: Response) => {
             return;
         }
 
-        
+        // check if patient has consent resource
+        let consentStatus = await issueConsent(patient?.id, facilityId);
+        if (!consentStatus) {
+            return res.status(400).json(OperationOutcome("Failed to issue consent. Try again later"));
+        }
 
-        // const consentId = `${idNumber ? idNumber : passport ? passport : birthCertificate}-${facility}`;
-        let consent = (await FhirApi(`/Consent/${consentId}`, {
-            method: 'PUT',
-            data: {
-                resourceType: "Consent",
-                id: consentId,
-                status: "active",
-                patient: {
-                    reference: `Patient/${patient?.id}`
-                },
-                organization: [
-                    {
-                        reference: `Organization/${facilityId}`
-                    }
-                ],
-                category: [
-                    {
-                        coding: [
-                            {
-                                system: "http://terminology.hl7.org/CodeSystem/consentcategorycodes",
-                                code: "HIE"
-                            }
-                        ]
-                    }
-                ],
-                dateTime: new Date().toISOString(),
-            }
-        }));
-        return res.status(consent.statusCode).json(consent.data);
+        return res.status(200).json(consentStatus);
     }
     catch (error) {
         console.log(error);
