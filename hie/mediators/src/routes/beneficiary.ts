@@ -8,6 +8,12 @@ export const router = express.Router();
 router.use(express.json());
 
 
+
+// const HCM_FACILITIES = process.env.HCM_FACILITIES ?? "";
+const momcareHybridIds = process.env.MOMCARE_HCM_FACILITIES?.split(",") ?? [];
+const momcareSocialIds = process.env.MOMCARE_SOCIAL_FACILITIES?.split(",") ?? [];
+
+
 /* Post patient to Carepay - Channel */
 router.post('/carepay', async (req, res) => {
   try {
@@ -21,20 +27,21 @@ router.post('/carepay', async (req, res) => {
     if (data?.identifier?.[0]?.type?.coding?.[0]?.display === "Mother's ID Number") {
       isDependant = true;
     }
-    if(Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
+    if (Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
       scheme = MomcareSchemes.MOMCARE_SOCIAL;
     }
-    if(data?.managingOrganization?.reference?.includes("15767")) {
+    if (momcareHybridIds.some(id => data?.managingOrganization?.reference?.includes(id))) {
       scheme = MomcareSchemes.MOMCARE_HYBRID;
     }
 
-    if(data?.managingOrganization?.reference?.includes("24991")) {
+    if (momcareSocialIds.some(id => data?.managingOrganization?.reference?.includes(id))) {
       scheme = MomcareSchemes.MOMCARE_SOCIAL;
     }
 
-    if(data?.managingOrganization?.reference?.includes("20091")) {
-      scheme = MomcareSchemes.MOMCARE_SOCIAL;
-    }
+   
+    // if (data?.managingOrganization?.reference?.includes("15767")) {
+    //   scheme = MomcareSchemes.MOMCARE_HYBRID;
+    // }
     const carepayResponse = await postBeneficiaryEndorsement(data, isDependant, scheme);
     if (JSON.stringify(carepayResponse).includes('error')) {
       if (Object.keys(parsedIds).indexOf("WHATSAPP_ENROLLMENT_ID") > -1) {

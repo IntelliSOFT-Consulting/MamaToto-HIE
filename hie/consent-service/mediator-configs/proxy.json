@@ -1,0 +1,43 @@
+{
+    "urn": "urn:consent-service-routes:ips",
+    "version": "1.0.0",
+    "name": "Consent Service Mediator",
+    "description": "This mediator is responsible for processing the Consent Service requests.",
+    "defaultChannelConfig": [
+        {
+            "name": "Consent Service Channel",
+            "urlPattern": "^/api/v1/.*$",
+            "routes": [
+                {
+                    "name": "Consent Service Route",
+                    "host": "consent-service",
+                    "pathTransform":"s/\\/\\/.*$//",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Consent Service Endpoint",
+            "host": "consent-service",
+            "path": "/",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}
