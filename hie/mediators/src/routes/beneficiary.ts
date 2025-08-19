@@ -7,8 +7,11 @@ export const router = express.Router();
 
 router.use(express.json());
 
-const HCM_FACILITIES = process.env.HCM_FACILITIES ?? "";
-const momcareIds = HCM_FACILITIES.split(",");
+
+
+// const HCM_FACILITIES = process.env.HCM_FACILITIES ?? "";
+const momcareHybridIds = process.env.MOMCARE_HCM_FACILITIES?.split(",") ?? [];
+const momcareSocialIds = process.env.MOMCARE_SOCIAL_FACILITIES?.split(",") ?? [];
 
 
 /* Post patient to Carepay - Channel */
@@ -27,9 +30,15 @@ router.post('/carepay', async (req, res) => {
     if (Object.keys(parsedIds).indexOf('MOMCARE_SOCIAL_FORM_ID') > -1) {
       scheme = MomcareSchemes.MOMCARE_SOCIAL;
     }
-    if (momcareIds.some(id => data?.managingOrganization?.reference?.includes(id))) {
+    if (momcareHybridIds.some(id => data?.managingOrganization?.reference?.includes(id))) {
       scheme = MomcareSchemes.MOMCARE_HYBRID;
     }
+
+    if (momcareSocialIds.some(id => data?.managingOrganization?.reference?.includes(id))) {
+      scheme = MomcareSchemes.MOMCARE_SOCIAL;
+    }
+
+   
     // if (data?.managingOrganization?.reference?.includes("15767")) {
     //   scheme = MomcareSchemes.MOMCARE_HYBRID;
     // }
