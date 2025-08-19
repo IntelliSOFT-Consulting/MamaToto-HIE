@@ -14,7 +14,7 @@ dotenv.config() // Load environment variables
 
 //Import routes
 import ProviderAuth from './routes/provider-auth';
-import FHIR from './routes/fhir-auth';
+import FHIR from './routes/fhir-proxy';
 import Issuer from './routes/consent-issuer';
 
 const app = express();

@@ -221,4 +221,41 @@ router.get('/fhir/Coverage', async (req: Request, res: Response) => {
 
     }
 });
+
+
+router.post('/fhir/Observation', async (req: Request, res: Response) => {
+    try {
+        const accessToken = req.headers.authorization?.split(' ')[1] || null;
+        if (!accessToken || req.headers.authorization?.split(' ')[0] != "Bearer") {
+            return res.status(401).json(OperationOutcome("Bearer token is required but not provided"));
+        }
+        
+        let currentUser = await getCurrentUserInfo(accessToken);
+        if (!currentUser) {
+            return res.status(401).json(OperationOutcome("Invalid Bearer token provided"));
+        }
+        let facilityId = currentUser.family_name;
+
+        let data = req.body;
+        // get id from observation
+        let patientId = data?.subject?.reference?.split('/')[1];
+        if (!patientId) {
+            return res.status(400).json(OperationOutcome("Patient ID is required in the observation data"));
+        }
+
+        const isConsentValid = await validateConsent(patientId, facilityId);
+        console.log(isConsentValid);
+        if (!isConsentValid) {
+            return res.status(401).json(OperationOutcome("No active consent found for the given patient ID"));
+        }
+        let shrResponse = (await FhirApi(`/Observation`, { method: 'POST', data })).data;
+        if (shrResponse.statusCode !== 201) {
+            return res.status(400).json(shrResponse.data);
+        }
+        return res.status(shrResponse.statusCode).json(shrResponse.data);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(OperationOutcome("Internal Server Error"));
+    }
+});
 export default router;

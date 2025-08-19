@@ -7,8 +7,6 @@ export const router = express.Router();
 
 router.use(express.json());
 
-
-
 const HCM_FACILITIES = process.env.HCM_FACILITIES ?? "";
 const momcareIds = HCM_FACILITIES.split(",");
 
