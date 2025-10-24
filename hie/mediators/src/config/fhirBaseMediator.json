@@ -1,0 +1,38 @@
+{
+    "urn": "urn:mediator:mamatoto-fhir-base",
+    "version": "1.0.0",
+    "name": "MamaToto FHIR Base Mediator",
+    "description": "This mediator is responsible for handling FHIR Server bound requests.",
+    "defaultChannelConfig": [
+      {
+        "name": "MamaToto FHIR Base Channel",
+        "urlPattern": "/fhir",
+        "routes": [
+          {
+            "name": "FHIR Base Route",
+            "host": "hapi-fhir-jpa",
+            "path": "/fhir",
+            "port": "8080",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+  
+          }
+        ],
+        "allow": ["*"],
+        "methods": ["GET", "POST", "PUT", "PATCH"],
+        "type": "http"
+      }
+    ],
+    "endpoints": [
+      {
+        "name": "MamaToto FHIR Base Mediator Endpoint",
+        "host": "hapi-fhir-jpa",
+        "path": "/fhir",
+        "port": "8080",
+        "primary": true,
+        "type": "http",
+        "status":"enabled"
+      }
+    ]
+  }

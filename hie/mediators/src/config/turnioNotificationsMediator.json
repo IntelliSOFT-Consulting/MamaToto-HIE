@@ -1,0 +1,43 @@
+{
+    "urn": "urn:turnio-notifications:ips",
+    "version": "1.0.0",
+    "name": "Turn.io Notifications Mediator",
+    "description": "This mediator is responsible for forwarding notification events to Turn.io.",
+    "defaultChannelConfig": [
+        {
+            "name": "Turn.io Notifications Channel",
+            "urlPattern": "/callback/turn",
+            "routes": [
+                {
+                    "name": "Turn.io Notifications Route",
+                    "host": "mediators",
+                    "path": "/callback/turn",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Turn.io Notifications Endpoint",
+            "host": "mediators",
+            "path": "/callback/turn",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}

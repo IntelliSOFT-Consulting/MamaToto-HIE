@@ -1,0 +1,43 @@
+{
+    "urn": "urn:carepay-beneficiary:ips",
+    "version": "1.0.0",
+    "name": "CarePay Beneficiary Mediator",
+    "description": "This mediator is responsible for processing the CarePay Beneficiary Payload.",
+    "defaultChannelConfig": [
+        {
+            "name": "CarePay Beneficiary Channel",
+            "urlPattern": "/beneficiary/carepay",
+            "routes": [
+                {
+                    "name": "CarePay Beneficiary Route",
+                    "host": "mediators",
+                    "path": "/beneficiary/carepay",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "CarePay Beneficiary Endpoint",
+            "host": "mediators",
+            "path": "/beneficiary/carepay",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}

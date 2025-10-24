@@ -1,42 +1,39 @@
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import express from "express";
+import cors from 'cors'
+import * as dotenv from 'dotenv'
 import cron from 'node-cron';
-import morgan from 'morgan';
-import logger from 'jet-logger';
+// import { setupSwagger } from "./swagger";
 
-//Import routes
-import BaseRouter from '@src/routes';
+dotenv.config() // Load environment variables
+
+const CRON_INTERVAL = Number(process.env.CRON_INTERVAL ?? 10); // set interval for cron jobs
+
+
+//Import routes 
+
+import Auth from './routes/auth';
 import Beneficiary from './routes/beneficiary';
 import Visit from './routes/visit';
 import Callback from './routes/callback';
 import Custom from './routes/custom';
+import WebFormEnrollment from './routes/forms';
+import Utils from './routes/tempUtils';
 
-import { fetchApprovedEndorsements, fetchVisits } from './lib/payloadMapping';
-import EnvVars from '@src/common/EnvVars';
-import { NodeEnvs } from '@src/common/misc';
-
-import HttpStatusCodes from '@src/common/HttpStatusCodes';
-import { RouteError } from '@src/common/classes';
-import { activateOpenHimConfigs } from '@src/lib/utils';
-
+import { fetchApprovedEndorsements, fetchVisits } from "./lib/carepay";
 
 
 const app = express();
+const PORT = 3000;
 
-app.use(cors());
+app.use(cors())
 
-app.use(express.json());
-
-// Show routes called in console during development
-if (EnvVars.NodeEnv === NodeEnvs.Dev.valueOf()) {
-  app.use(morgan('dev'));
-}
+// setupSwagger(app);
 
 app.use((req, res, next) => {
   try {
     // Starts when a new request is received by the server
-    logger.info(`${new Date().toUTCString()} : The Mediator has received ${req.method} request from ${req.hostname} on ${req.path}`);
-    next();
+    console.log(`${new Date().toUTCString()} : The Mediator has received ${req.method} request from ${req.hostname} on ${req.path}`);
+    next()
   } catch (error) {
     // Starts when a new request is received by the server
     res.json(error);
@@ -44,37 +41,25 @@ app.use((req, res, next) => {
   }
 });
 
-app.use(BaseRouter);
-app.use('/beneficiary', Beneficiary);
-app.use('/visit', Visit);
-app.use('/callback', Callback);
-app.use('/custom', Custom);
-
-// add error handler
-app.use((err: Error, _: Request, res: Response, next: NextFunction) => {
-  if (EnvVars.NodeEnv !== NodeEnvs.Test.valueOf()) {
-    logger.err(err, true);
-  }
-  let status = HttpStatusCodes.BAD_REQUEST;
-  if (err instanceof RouteError) {
-    status = err.status;
-    res.status(status).json({ error: err.message });
-  }
-  return next(err);
-});
-
-// Load openhim Defaults
-activateOpenHimConfigs()
+app.use('/auth', Auth)
+app.use('/beneficiary', Beneficiary)
+app.use('/forms', WebFormEnrollment)
+app.use('/visit', Visit)
+app.use('/callback', Callback)
+app.use('/custom', Custom)
+app.use('/utils', Utils)
 
 
-app.listen(EnvVars.Port, () => {
-  logger.info(`⚡️[server]: Server is running at http://localhost:${EnvVars.Port}`);
+
+
+app.listen(PORT, () => {
+  console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
 });
 
 // Set up a cron job to run every three minutes
-// cron.schedule(`*/${EnvVars.CRON_INTERVAL} * * * *`, () => {
-//   console.log(`Cron job running every ${EnvVars.CRON_INTERVAL} minutes`);
-//   fetchVisits();
-//   fetchApprovedEndorsements();
-// });
+cron.schedule(`*/${CRON_INTERVAL} * * * *`, () => {
+  console.log(`Cron job running every ${CRON_INTERVAL} minutes`);
+  fetchVisits();
+  fetchApprovedEndorsements();
+});
 

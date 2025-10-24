@@ -28,7 +28,8 @@ hapi:
     openapi_enabled: true
     ### This is the FHIR version. Choose between, DSTU2, DSTU3, R4 or R5
     fhir_version: R4
-    server_address: https://openhim-comms-mamatoto.intellisoftkenya.com/fhir
+    ips_enabled: true
+    server_address: https://openhim-core.mamatoto.pharmaccess.io/fhir
     bulk_export_enabled: true
     default_pretty_print: true
     cql_enabled: true
@@ -48,14 +49,14 @@ hapi:
     #    supported_resource_types:
     #      - Patient
     #      - Observation
-    #    allow_cascading_deletes: true
+    allow_cascading_deletes: true
     #    allow_contains_searches: true
     #    allow_external_references: true
     #    allow_multiple_delete: true
       #  allow_override_default_search_params: true
     auto_create_placeholder_reference_targets: true
-    # default_encoding: JSON
-    #    default_page_size: 20
+    default_encoding: JSON
+    default_page_size: 20
     #    delete_expunge_enabled: true
     #    enable_repository_validating_interceptor: false
     enable_index_missing_fields: true
@@ -72,9 +73,9 @@ hapi:
     filter_search_enabled: true
     graphql_enabled: true
     #    narrative_enabled: true
-    mdm_enabled: true
+    # mdm_enabled: true
     local_base_urls:
-      - https://openhim-comms-mamatoto.intellisoftkenya.com/fhir
+      - https://openhim-core.mamatoto.pharmaccess.io/fhir
 
     # mdm_enabled: true
     #    partitioning:

@@ -1,0 +1,20 @@
+networks:
+    cloudbuild:
+        external: true
+
+
+services:
+    matchbox:
+        container_name: matchbox
+        # image: intellisoftkenya/matchbox:latest
+        image: europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v3.9.10
+        networks:
+            - cloudbuild
+        restart: always
+        ports:
+            - "8096:8080"
+        volumes:
+            - ./with-cda:/config
+            # - ./with-settings:/config
+
+

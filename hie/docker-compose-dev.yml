@@ -4,19 +4,22 @@ networks:
     hapi-fhir:
     mediators:
     cloudbuild:
+        external: true
 
 services:
     mongo:
         container_name: openhim-mongo
         image: mongo:4.0
+        ports:
+            - 27017:27017
         networks:
             - openhim
         volumes:
             - mongodb-data:/data/db
         restart: always
 
-    hapi-fhir-postgres:
-        container_name: hapi-fhir-postgres
+    client-registry-postgres:
+        container_name: client-registry-postgres
         image: postgres:14-alpine
         restart: always
         networks:
@@ -26,11 +29,25 @@ services:
             POSTGRES_DB: hapi
             POSTGRES_PASSWORD: hapi123
         volumes:
-            - 'hapi-fhir-postgres:/var/lib/postgresql/data'
+            - 'client-registry-postgres:/var/lib/postgresql/data'
+    
+    shr-postgres:
+        container_name: shr-postgres
+        image: postgres:14-alpine
+        restart: unless-stopped
+        networks:
+            - hapi-fhir
+            - cloudbuild
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_DB: hapi
+            POSTGRES_PASSWORD: hapi123
+        volumes:
+            - 'shr-postgres:/var/lib/postgresql/data'
 
-    hapi-fhir-jpa:
-        image: intellisoftkenya/hapi-fhir:latest
-        container_name: hapi-fhir-jpa
+    client-registry:
+        image: hapiproject/hapi:v7.4.0
+        container_name: client-registry
         restart: unless-stopped
         networks:
             - hapi-fhir
@@ -38,7 +55,23 @@ services:
         ports:
             - "8081:8080"
         depends_on:
-            - hapi-fhir-postgres
+            - client-registry-postgres
+        volumes:
+            - "./hapi-fhir:/hapi"
+        environment:
+            SPRING_CONFIG_LOCATION: /hapi/application.client_registry.yaml
+    
+    shr:
+        image: hapiproject/hapi:v7.4.0
+        container_name: shr
+        restart: unless-stopped
+        networks:
+            - hapi-fhir
+            - openhim
+        ports:
+            - "8086:8080"
+        depends_on:
+            - shr-postgres
         volumes:
             - "./hapi-fhir:/hapi"
         environment:
@@ -52,14 +85,11 @@ services:
             - .env
         ports:
             - "8080:8080"
-            # - "5000:5000"
+            - "5000:5000"
             - "5001:5001"
-            # - "5050:5050"
-            # - "5051:5051"
-            # - "5052:5052"
-            # - "7788:7788"
         depends_on:
             - mongo
+            - openhim-console
         networks:
             - openhim
             - hapi-fhir
@@ -84,27 +114,29 @@ services:
             timeout: 30s
             retries: 3
         volumes:
-            - ./default_dev.json:/usr/share/nginx/html/config/default.json
+            - ./default.json:/usr/share/nginx/html/config/default.json
             - /etc/ssl/crt:/etc/nginx/certs
 
-    # mediators:
-    #     depends_on:
-    #         - openhim-core
-    #         - hapi-fhir-jpa
-    #     container_name: mediators
-    #     restart: on-failure
-    #     build:
-    #         context: mediators
-    #         dockerfile: Dockerfile.dev
-    #     volumes:
-    #         - ./mediators:/usr/mediators
-    #     networks:
-    #         - openhim
-    #         - hapi-fhir
-    #     ports:
-    #         - "8082:3000"
-    #     env_file:
-    #         - mediators/.env
+    mediators:
+        depends_on:
+            - openhim-core
+            - client-registry
+            - shr
+        container_name: mediators
+        restart: on-failure
+        build:
+            context: mediators
+            dockerfile: Dockerfile.dev
+        volumes:
+            - ./mediators:/usr/mediators
+        networks:
+            - openhim
+            - hapi-fhir
+        ports:
+            - "8082:3000"
+        env_file:
+            - mediators/.env
+
     nginx:
         image: nginx:alpine
         container_name: nginx
@@ -117,23 +149,12 @@ services:
             - ./nginx.conf:/etc/nginx/nginx.conf:ro
         depends_on:
             - openhim-core
-    # hie-admin:
-    #     container_name: hie-admin
-    #     build:
-    #         context: admin
-    #         dockerfile: Dockerfile.dev
-    #     volumes:
-    #         - ./admin:/app/admin
-    #     networks:
-    #         - openhim
-    #         - mediators
-    #     ports:
-    #         - "8088:3000"
-    #     env_file:
-    #         - admin/.env
+    
+
 
 volumes:
     mongodb-data:
-    hapi-fhir-postgres:
+    client-registry-postgres:
     hapi:
     mediators:
+    shr-postgres:

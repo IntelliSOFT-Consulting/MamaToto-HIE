@@ -1,68 +1,54 @@
-import { createClient, getOpenHIMToken } from '../lib/utils';
-import { getKeycloakAdminToken } from '../lib/keycloak';
-import { IReq, IRes } from '@src/routes/common/types';
-import logger from 'jet-logger';
-import HttpStatusCodes from '@src/common/HttpStatusCodes';
+import express, { Request, response, Response } from "express";
+import { createClient, getOpenHIMToken, installChannels } from "../lib/utils";
+import { getKeycloakAdminToken, getKeycloakUserToken } from "../lib/keycloak";
 
-// // Login
-// router.get("/token", async (req: Request, res: Response) => {
-//     try {
-//         let token = await getOpenHIMToken();
-//         await installChannels()
-//         res.set(token);
-//         res.json({ status: "success", token });
-//         return;
-//     }
-//     catch (error) {
-//         console.log(error);
-//         res.statusCode = HttpStatusCodes.UNAUTHORIZED;
-//         res.json({ error: "incorrect email or password" });
-//         return;
-//     }
-// });
+
+const router = express.Router();
+router.use(express.json());
 
 // Login
-
-async function getToken(_: IReq, res: IRes) {
-  try {
-    const response = await getKeycloakAdminToken();
-    res.statusCode = !Object.keys(response).includes('error') ? HttpStatusCodes.OK : HttpStatusCodes.UNAUTHORIZED ;
-    res.json({ ...response, status: !Object.keys(response).includes('error')  ? 'success' : 'error'   });
-  }
-  catch (error) {
-    logger.err(error);
-    res.statusCode = HttpStatusCodes.UNAUTHORIZED;
-    res.json({ error: 'incorrect email or password', status: 'error' });
-  }
-
-}
-
-
-
-// Login
-const authenticateClient = async (req: IReq, res: IRes) =>  {
-  try {
-    await getOpenHIMToken();
-    const { name, password } = req.body as { name: string; password: string };
-    const response = await createClient(name, password);
-    if (response === 'Unauthorized' || response.includes('error')) {
-      res.statusCode = HttpStatusCodes.UNAUTHORIZED;
-      res.json({ status: 'error', error: response });
-      return;
+router.post("/token", async (req: Request, res: Response) => {
+    try {
+        
+        let { username, password } = req.body;
+        // let response = await getKeycloakUserToken(username, password);
+        let response = await getKeycloakAdminToken()
+        // console.log(response);
+        res.statusCode = Object.keys(response).indexOf('error') < 0 ? 200 : 401 ;
+        res.json({ ...response, status: Object.keys(response).indexOf('error') < 0  ? "success" : "error"  , });
+        return;
     }
-    res.statusCode = HttpStatusCodes.CREATED;
-    res.json({ status: 'success', response });
-    return;
-  }
-  catch (error) {
-    logger.err(error);
-    res.statusCode = HttpStatusCodes.UNAUTHORIZED;
-    res.json({ error: 'incorrect email or password', status: 'error' });
-    return;
-  }
-};
+    catch (error) {
+        console.log(error);
+        res.statusCode = 401;
+        res.json({ error: "incorrect email or password", status: "error" });
+        return;
+    }
+});
 
-export default { 
-  getToken,
-  authenticateClient 
-} as const;
+
+
+// Login
+router.post("/client", async (req: Request, res: Response) => {
+    try {
+        await getOpenHIMToken();
+        let { name, password } = req.body;
+        let response = await createClient(name, password);
+        if (response === "Unauthorized" || response.indexOf("error") > -1) {
+            res.statusCode = 401;
+            res.json({ status: "error", error: response });
+            return;
+        }
+        res.statusCode = 201;
+        res.json({ status: "success", response });
+        return;
+    }
+    catch (error) {
+        console.log(error);
+        res.statusCode = 401;
+        res.json({ error: "incorrect email or password", status: "error" });
+        return;
+    }
+});
+
+export default router;

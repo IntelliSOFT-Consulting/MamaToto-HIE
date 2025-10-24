@@ -1,0 +1,43 @@
+{
+    "urn": "urn:custom-registation:whatsapp",
+    "version": "1.0.0",
+    "name": "Custom Registration Mediator",
+    "description": "This mediator is responsible for processing the CarePay Beneficiary Payload.",
+    "defaultChannelConfig": [
+        {
+            "name": "Custom Registration Workflow Channel",
+            "urlPattern": "^/custom/.*$",
+            "routes": [
+                {
+                    "name": "Custom Registration Route",
+                    "host": "mediators",
+                    "pathTransform": "s/\\/\\/.*$//",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST", "GET", "PUT"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Custom Registration Endpoint",
+            "host": "mediators",
+            "path": "/custom",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}

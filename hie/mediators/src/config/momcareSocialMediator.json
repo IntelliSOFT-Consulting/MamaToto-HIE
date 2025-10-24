@@ -1,0 +1,43 @@
+{
+    "urn": "urn:momcare-social-beneficiary:ips",
+    "version": "1.0.0",
+    "name": "Momcare Social Beneficiary Mediator",
+    "description": "This mediator is responsible for processing the Momcare Social Heyforms Beneficiary Payload.",
+    "defaultChannelConfig": [
+        {
+            "name": "Momcare Social Beneficiary Channel",
+            "urlPattern": "/api/v1/momcare-social",
+            "routes": [
+                {
+                    "name": "Momcare Social Beneficiary Route",
+                    "host": "mediators",
+                    "path": "/api/v1/momcare-social",
+                    "port": "3000",
+                    "primary": true,
+                    "type": "http",
+                    "status":"enabled"
+
+                }
+            ],
+            "allow": [
+                "*"
+            ],
+            "methods": [
+                "POST"
+            ],
+            "type": "http"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Momcare Social Beneficiary Endpoint",
+            "host": "mediators",
+            "path": "/api/v1/momcare-social",
+            "port": "3000",
+            "primary": true,
+            "type": "http",
+            "status":"enabled"
+
+        }
+    ]
+}
